@@ -20,6 +20,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
   late final WebViewController _controller;
   int progress = 0;
   bool _downloading = false;
+  bool _downloadDialogOpen = false;
 
   bool _looksLikeDownload(String url) {
     final u = url.toLowerCase();
@@ -43,6 +44,31 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     return 'descarga_$ts.$fallbackExt';
   }
 
+  Future<void> _showDownloadingDialog() async {
+    if (!mounted || _downloadDialogOpen) return;
+    _downloadDialogOpen = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        title: Text('Descargando QR'),
+        content: Row(
+          children: [
+            SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2)),
+            SizedBox(width: 12),
+            Expanded(child: Text('Espera un momento...')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _hideDownloadingDialog() {
+    if (!mounted || !_downloadDialogOpen) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    _downloadDialogOpen = false;
+  }
+
   Future<void> _showDownloadedDialog(String fileName) async {
     if (!mounted) return;
     await showDialog(
@@ -60,9 +86,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
   Future<void> _downloadToDownloads(String url) async {
     if (_downloading) return;
     setState(() => _downloading = true);
-    if (mounted) {
-      showAppToast(context, 'Descargando QR... espera un momento', type: AppToastType.warning);
-    }
+    await _showDownloadingDialog();
 
     try {
       if (Platform.isAndroid) {
@@ -105,7 +129,12 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
       }
       final savePathPictures = '${picsDir.path}/$fileName';
 
-      await Dio().download(
+      await Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 12),
+        ),
+      ).download(
         url,
         savePath,
         options: Options(
@@ -119,11 +148,14 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
         await File(savePath).copy(savePathPictures);
       } catch (_) {}
 
+      _hideDownloadingDialog();
       await _showDownloadedDialog(fileName);
     } catch (e) {
+      _hideDownloadingDialog();
       if (!mounted) return;
       showAppToast(context, 'No se pudo descargar: $e', type: AppToastType.error);
     } finally {
+      _hideDownloadingDialog();
       if (mounted) setState(() => _downloading = false);
     }
   }
@@ -132,12 +164,20 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     try {
       final raw = await _controller.runJavaScriptReturningResult('''
 (() => {
-  const imgs = Array.from(document.querySelectorAll('img'))
-    .map(i => i.src)
-    .filter(Boolean)
-    .filter(src => src.startsWith('http') || src.startsWith('data:image/'));
-  const bestImg = imgs.find(s => s.toLowerCase().includes('qr')) || imgs[0];
-  if (bestImg) return bestImg;
+  const imgs = Array.from(document.querySelectorAll('img')).filter(i => i.width > 180 && i.height > 180);
+  if (imgs.length > 0) {
+    const preferred = imgs.find(i => (i.src || '').toLowerCase().includes('qr')) || imgs[0];
+    try {
+      const c = document.createElement('canvas');
+      c.width = preferred.naturalWidth || preferred.width;
+      c.height = preferred.naturalHeight || preferred.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(preferred, 0, 0);
+      const data = c.toDataURL('image/png');
+      if (data && data.startsWith('data:image/')) return data;
+    } catch (_) {}
+    return preferred.src || '';
+  }
 
   const canvases = Array.from(document.querySelectorAll('canvas'));
   if (canvases.length > 0) {
@@ -173,9 +213,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
       if (src.startsWith('data:image/')) {
         if (_downloading) return;
         setState(() => _downloading = true);
-        if (mounted) {
-          showAppToast(context, 'Descargando QR... espera un momento', type: AppToastType.warning);
-        }
+        await _showDownloadingDialog();
         try {
           final metaAndData = src.split(',');
           if (metaAndData.length < 2) throw Exception('data URL inválida');
@@ -194,12 +232,15 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
             final picPath = '${picsDir.path}/$fileName';
             await out.copy(picPath);
           } catch (_) {}
+          _hideDownloadingDialog();
           await _showDownloadedDialog(fileName);
         } finally {
+          _hideDownloadingDialog();
           if (mounted) setState(() => _downloading = false);
         }
       }
     } catch (e) {
+      _hideDownloadingDialog();
       if (!mounted) return;
       showAppToast(context, 'No se pudo descargar QR: $e', type: AppToastType.error);
     }
