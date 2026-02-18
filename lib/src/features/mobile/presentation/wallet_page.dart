@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// removed services import
 import 'package:e2v_app/src/features/mobile/presentation/payment_webview_modal.dart';
 
 class WalletPage extends StatefulWidget {
@@ -84,19 +84,18 @@ class _WalletPageState extends State<WalletPage> {
 
       final txId = (res['transaction_id'] as num?)?.toInt();
       final url = res['payment_url']?.toString() ?? '';
-      final qr = res['qr_image']?.toString() ?? '';
 
-      // Payment page opens only when user taps "Abrir pago" in the modal.
+      if (url.isEmpty) {
+        m.showSnackBar(const SnackBar(content: Text('No llegó URL de pago de Libélula')));
+        return;
+      }
 
-      final status = ValueNotifier<String>('PENDING');
       Timer? timer;
-
       Future<void> checkStatus() async {
         if (txId == null) return;
         try {
           final s = await widget.api.libelulaStatus(txId);
           final st = (s['status']?.toString() ?? 'PENDING').toUpperCase();
-          status.value = st;
 
           if (st == 'COMPLETED') {
             timer?.cancel();
@@ -108,84 +107,20 @@ class _WalletPageState extends State<WalletPage> {
           } else if (st == 'FAILED') {
             timer?.cancel();
             if (!mounted) return;
+            navigator.maybePop();
             m.showSnackBar(const SnackBar(content: Text('❌ Pago fallido o rechazado.')));
           }
         } catch (_) {}
       }
 
       timer = Timer.periodic(const Duration(seconds: 4), (_) => checkStatus());
-
-      if (!mounted) return;
       await showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => AlertDialog(
-          title: Text('Recarga Bs ${amount.toStringAsFixed(2)}'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (qr.isNotEmpty) ...[
-                  const Text('QR de pago:'),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      qr,
-                      height: 220,
-                      width: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Text('No se pudo cargar el QR.'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                const Text('Estado:'),
-                const SizedBox(height: 6),
-                ValueListenableBuilder<String>(
-                  valueListenable: status,
-                  builder: (_, st, __) => Row(
-                    children: [
-                      if (st == 'PENDING') ...[
-                        const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                        const SizedBox(width: 8),
-                      ],
-                      Text(st),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SelectableText(url),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                await Clipboard.setData(ClipboardData(text: url));
-                messenger.showSnackBar(const SnackBar(content: Text('Link copiado')));
-              },
-              child: const Text('Copiar link'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                await showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) => PaymentWebViewModal(url: url),
-                );
-              },
-              child: const Text('Abrir pago'),
-            ),
-            OutlinedButton(onPressed: checkStatus, child: const Text('Verificar ahora')),
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
-          ],
-        ),
+        builder: (_) => PaymentWebViewModal(url: url),
       );
 
       timer.cancel();
-      status.dispose();
     } catch (e) {
       if (!mounted) return;
       m.showSnackBar(SnackBar(content: Text('Error Libélula: $e')));
