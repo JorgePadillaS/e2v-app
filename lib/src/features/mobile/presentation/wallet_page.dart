@@ -47,6 +47,12 @@ class _WalletPageState extends State<WalletPage> {
     return double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0;
   }
 
+  double _toDouble(dynamic v) {
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v.replaceAll(',', '.')) ?? 0;
+    return 0;
+  }
+
   Future<void> _confirmAndOpenLibelula() async {
     final amount = _manualAmount();
     if (amount <= 0) {
@@ -226,7 +232,7 @@ class _WalletPageState extends State<WalletPage> {
                 FutureBuilder<Map<String, dynamic>>(
                   future: _wallet,
                   builder: (_, snap) {
-                    final amount = ((snap.data?['balance'] as num?) ?? 0).toDouble();
+                    final amount = _toDouble(snap.data?['balance']);
                     return Text('Bs ${amount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w700, color: Colors.white));
                   },
                 ),
