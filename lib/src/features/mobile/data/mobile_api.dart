@@ -57,6 +57,11 @@ class MobileApi {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  Future<Map<String, dynamic>> deletePendingLibelula(int transactionId) async {
+    final res = await _dio.delete('/wallet/libelula/pending/$transactionId');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<Map<String, dynamic>> sessions() async {
     final res = await _dio.get('/sessions');
     return Map<String, dynamic>.from(res.data as Map);

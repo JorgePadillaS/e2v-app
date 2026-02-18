@@ -86,6 +86,35 @@ class _WalletPageState extends State<WalletPage> {
     return raw;
   }
 
+  String _txCodeOf(Map<String, dynamic> it) {
+    final ext = (it['external_payment_id'] ?? '').toString();
+    if (ext.isNotEmpty && ext != 'null') return ext;
+    final ref = (it['reference_id'] ?? it['reference'] ?? '').toString();
+    return ref;
+  }
+
+  String _paymentUrlOf(Map<String, dynamic> it) {
+    final raw = it['metadata'];
+    if (raw is Map) {
+      final reg = raw['register_response'];
+      if (reg is Map && reg['url_pasarela_pagos'] != null) return reg['url_pasarela_pagos'].toString();
+      if (raw['url_pasarela_pagos'] != null) return raw['url_pasarela_pagos'].toString();
+    }
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final m = raw;
+        final key = 'url_pasarela_pagos';
+        final idx = m.indexOf(key);
+        if (idx >= 0) {
+          final sub = m.substring(idx);
+          final q = RegExp(r'url_pasarela_pagos"\s*:\s*"([^"]+)"').firstMatch(sub);
+          if (q != null) return q.group(1)!.replaceAll('\\/', '/');
+        }
+      } catch (_) {}
+    }
+    return '';
+  }
+
   (Color, String) _statusStyle(String status) {
     if (status == 'COMPLETED' || status == 'SUCCESS' || status == 'PAID' || status == 'PAGADO') {
       return (Colors.green, 'PROCESADO');
@@ -347,13 +376,69 @@ class _WalletPageState extends State<WalletPage> {
                     .map((it) {
                       final st = _statusOf(it);
                       final (color, label) = _statusStyle(st);
-                      return Card(
-                        child: ListTile(
-                          title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
-                          subtitle: Text(it['created_at']?.toString().replaceAll('T', ' ').replaceAll('.000000Z', '') ?? ''),
-                          trailing: Chip(
-                            label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                            backgroundColor: color,
+                      final txId = (it['id'] as num?)?.toInt();
+                      final url = _paymentUrlOf(it);
+
+                      return Dismissible(
+                        key: ValueKey('pending_${it['id']}'),
+                        background: Container(
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          color: Colors.teal,
+                          child: const Row(
+                            children: [Icon(Icons.open_in_new, color: Colors.white), SizedBox(width: 8), Text('Continuar pago', style: TextStyle(color: Colors.white))],
+                          ),
+                        ),
+                        secondaryBackground: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          color: Colors.red,
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [Text('Eliminar', style: TextStyle(color: Colors.white)), SizedBox(width: 8), Icon(Icons.delete, color: Colors.white)],
+                          ),
+                        ),
+                        confirmDismiss: (direction) async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          if (direction == DismissDirection.startToEnd) {
+                            if (url.isEmpty) {
+                              messenger.showSnackBar(const SnackBar(content: Text('No hay URL para retomar pago')));
+                              return false;
+                            }
+                            await showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => PaymentWebViewModal(url: url),
+                            );
+                            return false;
+                          }
+
+                          if (txId == null) return false;
+                          try {
+                            await widget.api.deletePendingLibelula(txId);
+                            await _reload();
+                            if (!mounted) return false;
+                            messenger.showSnackBar(const SnackBar(content: Text('Pendiente eliminado')));
+                          } catch (e) {
+                            if (!mounted) return false;
+                            messenger.showSnackBar(SnackBar(content: Text('No se pudo eliminar: $e')));
+                          }
+                          return false;
+                        },
+                        child: Card(
+                          child: ListTile(
+                            title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(it['created_at']?.toString().replaceAll('T', ' ').replaceAll('.000000Z', '') ?? ''),
+                                Text('Código: ${_txCodeOf(it).isEmpty ? '-' : _txCodeOf(it)}'),
+                              ],
+                            ),
+                            trailing: Chip(
+                              label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                              backgroundColor: color,
+                            ),
                           ),
                         ),
                       );
@@ -387,6 +472,7 @@ class _WalletPageState extends State<WalletPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(it['created_at']?.toString().replaceAll('T', ' ').replaceAll('.000000Z', '') ?? ''),
+                              Text('Código: ${_txCodeOf(it).isEmpty ? '-' : _txCodeOf(it)}'),
                               if ((it['invoice_number'] ?? '').toString().isNotEmpty)
                                 Text('Factura: ${it['invoice_number']}'),
                             ],
