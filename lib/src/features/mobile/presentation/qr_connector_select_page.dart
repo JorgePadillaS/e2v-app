@@ -42,6 +42,10 @@ class _QrConnectorSelectPageState extends State<QrConnectorSelectPage> {
   }
 
   String _labelFor(Map<String, dynamic> c) {
+    final cid = (c['connector_id'] as num?)?.toInt();
+    if (cid == 1) return 'GBT';
+    if (cid == 2) return 'CCS2';
+
     final type = (c['type'] ?? '').toString().toUpperCase();
     if (type.contains('CCS2') || type.contains('CSS2')) return 'CCS2';
     if (type.contains('GBT') || type.contains('GB/T')) return 'GBT';
@@ -69,11 +73,11 @@ class _QrConnectorSelectPageState extends State<QrConnectorSelectPage> {
   @override
   Widget build(BuildContext context) {
     final ccs = widget.connectors.cast<Map<String, dynamic>>().firstWhere(
-          (c) => _labelFor(c) == 'CCS2',
+          (c) => (c['connector_id'] as num?)?.toInt() == 2 || _labelFor(c) == 'CCS2',
           orElse: () => const {},
         );
     final gbt = widget.connectors.cast<Map<String, dynamic>>().firstWhere(
-          (c) => _labelFor(c) == 'GBT',
+          (c) => (c['connector_id'] as num?)?.toInt() == 1 || _labelFor(c) == 'GBT',
           orElse: () => const {},
         );
 
