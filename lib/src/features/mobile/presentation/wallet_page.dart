@@ -13,6 +13,28 @@ class _WalletPageState extends State<WalletPage> {
   late Future<Map<String, dynamic>> _wallet;
   late Future<Map<String, dynamic>> _tx;
 
+  Future<void> _openLibelula(double amount) async {
+    final m = ScaffoldMessenger.of(context);
+    try {
+      final res = await widget.api.libelulaCheckout(amount);
+      if (!mounted) return;
+      final url = res['payment_url']?.toString() ?? '';
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Pago Libélula creado'),
+          content: SelectableText(url.isEmpty ? 'No llegó URL de pago' : url),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      m.showSnackBar(SnackBar(content: Text('Libélula error: $e')));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +74,7 @@ class _WalletPageState extends State<WalletPage> {
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [
               FilledButton(
                 onPressed: () async {
@@ -59,9 +82,9 @@ class _WalletPageState extends State<WalletPage> {
                   await widget.api.topup(10);
                   await _reload();
                   if (!mounted) return;
-                  m.showSnackBar(const SnackBar(content: Text('Recarga +10 aplicada')));
+                  m.showSnackBar(const SnackBar(content: Text('Recarga local +10 aplicada')));
                 },
-                child: const Text('+10'),
+                child: const Text('Local +10'),
               ),
               FilledButton(
                 onPressed: () async {
@@ -69,9 +92,9 @@ class _WalletPageState extends State<WalletPage> {
                   await widget.api.topup(20);
                   await _reload();
                   if (!mounted) return;
-                  m.showSnackBar(const SnackBar(content: Text('Recarga +20 aplicada')));
+                  m.showSnackBar(const SnackBar(content: Text('Recarga local +20 aplicada')));
                 },
-                child: const Text('+20'),
+                child: const Text('Local +20'),
               ),
               FilledButton(
                 onPressed: () async {
@@ -79,9 +102,21 @@ class _WalletPageState extends State<WalletPage> {
                   await widget.api.topup(50);
                   await _reload();
                   if (!mounted) return;
-                  m.showSnackBar(const SnackBar(content: Text('Recarga +50 aplicada')));
+                  m.showSnackBar(const SnackBar(content: Text('Recarga local +50 aplicada')));
                 },
-                child: const Text('+50'),
+                child: const Text('Local +50'),
+              ),
+              OutlinedButton(
+                onPressed: () => _openLibelula(10),
+                child: const Text('Libélula +10'),
+              ),
+              OutlinedButton(
+                onPressed: () => _openLibelula(20),
+                child: const Text('Libélula +20'),
+              ),
+              OutlinedButton(
+                onPressed: () => _openLibelula(50),
+                child: const Text('Libélula +50'),
               ),
             ],
           ),
