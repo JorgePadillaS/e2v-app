@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:e2v_app/src/core/ui/app_toast.dart';
+import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import 'package:e2v_app/src/features/mobile/presentation/qr_scan_page.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 
 class NfcPage extends StatefulWidget {
-  const NfcPage({super.key, required this.assignedTag});
+  const NfcPage({super.key, required this.assignedTag, required this.api});
   final String assignedTag;
+  final MobileApi api;
 
   @override
   State<NfcPage> createState() => _NfcPageState();
@@ -104,6 +107,42 @@ class _NfcPageState extends State<NfcPage> {
     });
   }
 
+  Future<void> _scanQrAndStart() async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(builder: (_) => const QrScanPage()),
+    );
+
+    if (!mounted || result == null) return;
+    final chargeBoxId = (result['charge_box_id'] ?? '').toString();
+    final connectorId = result['connector_id'] as int?;
+
+    if (chargeBoxId.isEmpty) {
+      showAppToast(context, 'QR inválido: falta charge_box_id', type: AppToastType.error);
+      return;
+    }
+
+    try {
+      final stations = await widget.api.stations();
+      if (!mounted) return;
+      final match = stations
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .firstWhere((s) => (s['charge_box_id']?.toString() ?? '') == chargeBoxId, orElse: () => {});
+
+      if (match.isEmpty) {
+        showAppToast(context, 'No se encontró estación para ese QR', type: AppToastType.error);
+        return;
+      }
+
+      final stationId = (match['id'] as num).toInt();
+      await widget.api.startStation(stationId, connectorId: connectorId);
+      if (!mounted) return;
+      showAppToast(context, 'Solicitud de carga enviada', type: AppToastType.success);
+    } catch (e) {
+      if (!mounted) return;
+      showAppToast(context, 'Error iniciando carga por QR: $e', type: AppToastType.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final chargerColor = matched
@@ -138,10 +177,24 @@ class _NfcPageState extends State<NfcPage> {
           ),
         ),
         const SizedBox(height: 12),
-        FilledButton.icon(
-          onPressed: scanning ? null : _startScan,
-          icon: const Icon(Icons.nfc),
-          label: const Text('Reintentar lectura NFC'),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: scanning ? null : _startScan,
+                icon: const Icon(Icons.nfc),
+                label: const Text('Reintentar NFC'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _scanQrAndStart,
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Escanear QR'),
+              ),
+            ),
+          ],
         ),
       ],
     );

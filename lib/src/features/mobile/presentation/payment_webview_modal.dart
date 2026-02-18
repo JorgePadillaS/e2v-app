@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewModal extends StatefulWidget {
@@ -40,6 +41,16 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
                 children: [
                   Expanded(
                     child: Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  ),
+                  IconButton(
+                    tooltip: 'Abrir externo (descargar/imprimir)',
+                    onPressed: () async {
+                      final uri = Uri.tryParse(widget.url);
+                      if (uri != null) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    icon: const Icon(Icons.open_in_new),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),

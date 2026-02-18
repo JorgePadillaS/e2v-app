@@ -70,14 +70,16 @@ class _BillingFlowPageState extends State<BillingFlowPage> {
             ),
           ),
           const SizedBox(height: 10),
-          TextField(
-            controller: complementoCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Complemento (opcional)',
-              border: OutlineInputBorder(),
+          if (type == 'CI') ...[
+            TextField(
+              controller: complementoCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Complemento (opcional)',
+                border: OutlineInputBorder(),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
+            const SizedBox(height: 10),
+          ],
           TextField(
             controller: razonCtrl,
             decoration: InputDecoration(
@@ -91,7 +93,7 @@ class _BillingFlowPageState extends State<BillingFlowPage> {
               Navigator.pop(context, {
                 'doc_type': type,
                 'documento': documentoCtrl.text.trim(),
-                'complemento': complementoCtrl.text.trim(),
+                'complemento': type == 'NIT' ? '' : complementoCtrl.text.trim(),
                 'razon_social': razonCtrl.text.trim(),
               });
             },

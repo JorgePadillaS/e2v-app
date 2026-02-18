@@ -38,7 +38,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         initialBillingComplement: user['billing_complement']?.toString(),
         initialBillingRazonSocial: user['billing_razon_social']?.toString(),
       ),
-      NfcPage(assignedTag: assignedTag),
+      NfcPage(assignedTag: assignedTag, api: api),
       SessionsPage(api: api),
     ];
 

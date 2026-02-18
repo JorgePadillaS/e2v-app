@@ -69,8 +69,10 @@ class MobileApi {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
-  Future<Map<String, dynamic>> startStation(int stationId) async {
-    final res = await _dio.post('/stations/$stationId/start');
+  Future<Map<String, dynamic>> startStation(int stationId, {int? connectorId}) async {
+    final res = await _dio.post('/stations/$stationId/start', data: {
+      if (connectorId != null) 'connector_id': connectorId,
+    });
     return Map<String, dynamic>.from(res.data as Map);
   }
 
