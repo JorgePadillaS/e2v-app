@@ -67,19 +67,6 @@ class _WalletPageState extends State<WalletPage> {
       return;
     }
 
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Confirmar recarga'),
-        content: Text('¿Deseas iniciar una recarga por Bs ${amount.toStringAsFixed(2)}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Continuar')),
-        ],
-      ),
-    );
-
-    if (ok != true) return;
     await _openLibelula(amount);
   }
 
