@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewModal extends StatefulWidget {
@@ -21,7 +20,6 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
   late final WebViewController _controller;
   int progress = 0;
   bool _downloading = false;
-  bool _autoSavedOnThisPage = false;
 
   bool _looksLikeDownload(String url) {
     final u = url.toLowerCase();
@@ -45,15 +43,18 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     return 'descarga_$ts.$fallbackExt';
   }
 
-  Future<void> _notifyAndOpen(String path, String fileName) async {
+  Future<void> _showDownloadedDialog(String fileName) async {
     if (!mounted) return;
-    showAppToast(context, 'Descargado: $fileName', type: AppToastType.success);
-    try {
-      await OpenFilex.open(path);
-    } catch (_) {
-      if (!mounted) return;
-      showAppToast(context, 'Archivo guardado en Descargas/Pictures', type: AppToastType.warning);
-    }
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Descarga completada'),
+        content: Text('Archivo guardado: $fileName'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
+        ],
+      ),
+    );
   }
 
   Future<void> _downloadToDownloads(String url) async {
@@ -115,7 +116,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
         await File(savePath).copy(savePathPictures);
       } catch (_) {}
 
-      await _notifyAndOpen(savePathPictures, fileName);
+      await _showDownloadedDialog(fileName);
     } catch (e) {
       if (!mounted) return;
       showAppToast(context, 'No se pudo descargar: $e', type: AppToastType.error);
@@ -181,15 +182,13 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
           final out = File('${downloadDir.path}/$fileName');
           final bytes = base64Decode(b64);
           await out.writeAsBytes(bytes);
-          String openPath = out.path;
           try {
             final picsDir = Directory('/storage/emulated/0/Pictures');
             if (!await picsDir.exists()) await picsDir.create(recursive: true);
             final picPath = '${picsDir.path}/$fileName';
             await out.copy(picPath);
-            openPath = picPath;
           } catch (_) {}
-          await _notifyAndOpen(openPath, fileName);
+          await _showDownloadedDialog(fileName);
         } finally {
           if (mounted) setState(() => _downloading = false);
         }
@@ -198,25 +197,6 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
       if (!mounted) return;
       showAppToast(context, 'No se pudo descargar QR: $e', type: AppToastType.error);
     }
-  }
-
-  Future<void> _autoSaveIfQrPage(String url) async {
-    final lower = url.toLowerCase();
-    final looksLikeDownloadPage = lower.contains('descargar') || lower.contains('download') || lower.contains('qr');
-    if (!looksLikeDownloadPage || _autoSavedOnThisPage || _downloading) return;
-
-    try {
-      final raw = await _controller.runJavaScriptReturningResult('''
-(() => {
-  const imgs = Array.from(document.querySelectorAll('img')).filter(i => i.width > 200 && i.height > 200);
-  return imgs.length > 0;
-})()
-''');
-      final hasLargeImg = raw.toString().toLowerCase().contains('true');
-      if (!hasLargeImg) return;
-      _autoSavedOnThisPage = true;
-      await _downloadQrFromDom();
-    } catch (_) {}
   }
 
   Future<void> _installDownloadHook() async {
@@ -261,12 +241,8 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (p) => setState(() => progress = p),
-          onPageFinished: (url) async {
-            _autoSavedOnThisPage = false;
+          onPageFinished: (_) async {
             await _installDownloadHook();
-            await Future.delayed(const Duration(milliseconds: 350));
-            if (!mounted) return;
-            await _autoSaveIfQrPage(url);
           },
           onNavigationRequest: (request) {
             if (_looksLikeDownload(request.url)) {

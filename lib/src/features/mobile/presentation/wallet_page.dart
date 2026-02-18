@@ -221,7 +221,7 @@ class _WalletPageState extends State<WalletPage> {
     }
   }
 
-  Future<void> _openSectionModal(String title, Widget child) async {
+  Future<void> _openSectionModal(String title, Widget Function(StateSetter modalSetState) childBuilder) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -234,22 +234,24 @@ class _WalletPageState extends State<WalletPage> {
         initialChildSize: 0.8,
         minChildSize: 0.55,
         maxChildSize: 0.95,
-        builder: (context, controller) => Padding(
-          padding: const EdgeInsets.all(16),
-          child: ListView(
-            controller: controller,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 12),
-              child,
-            ],
+        builder: (context, controller) => StatefulBuilder(
+          builder: (context, modalSetState) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: ListView(
+              controller: controller,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                childBuilder(modalSetState),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _amountRow() {
+  Widget _amountRow({VoidCallback? refreshModal}) {
     return Row(
       children: quickAmounts
           .map((a) => Expanded(
@@ -261,14 +263,16 @@ class _WalletPageState extends State<WalletPage> {
                         selectedAmount = a;
                         amountCtrl.text = a.toStringAsFixed(0);
                       });
+                      refreshModal?.call();
                     },
                     child: Container(
                       height: 52,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
+                        color: selectedAmount == a ? Colors.teal.withValues(alpha: 0.24) : null,
                         border: Border.all(
                           color: selectedAmount == a ? Colors.tealAccent : const Color(0xFF595591),
-                          width: 2,
+                          width: selectedAmount == a ? 2.6 : 1.6,
                         ),
                       ),
                       child: Center(
@@ -299,12 +303,12 @@ class _WalletPageState extends State<WalletPage> {
 
   @override
   Widget build(BuildContext context) {
-    final rechargeContent = Column(
+    Widget rechargeContent(StateSetter modalSetState) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Elige el monto de tu recarga', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
-        _amountRow(),
+        _amountRow(refreshModal: () => modalSetState(() {})),
         const SizedBox(height: 12),
         TextField(
           controller: amountCtrl,
@@ -395,7 +399,7 @@ class _WalletPageState extends State<WalletPage> {
       ],
     );
 
-    final pendingContent = FutureBuilder<Map<String, dynamic>>(
+    Widget pendingContent(StateSetter _) => FutureBuilder<Map<String, dynamic>>(
       future: _tx,
       builder: (_, snap) {
         if (!snap.hasData) return const SizedBox.shrink();
@@ -480,7 +484,7 @@ class _WalletPageState extends State<WalletPage> {
       },
     );
 
-    final recargasContent = FutureBuilder<Map<String, dynamic>>(
+    Widget recargasContent(StateSetter _) => FutureBuilder<Map<String, dynamic>>(
       future: _tx,
       builder: (_, snap) {
         if (!snap.hasData) return const SizedBox.shrink();
