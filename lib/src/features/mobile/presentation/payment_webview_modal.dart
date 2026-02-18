@@ -20,6 +20,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
   late final WebViewController _controller;
   int progress = 0;
   bool _downloading = false;
+  bool _autoSavedOnThisPage = false;
 
   bool _looksLikeDownload(String url) {
     final u = url.toLowerCase();
@@ -169,6 +170,25 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     }
   }
 
+  Future<void> _autoSaveIfQrPage(String url) async {
+    final lower = url.toLowerCase();
+    final looksLikeDownloadPage = lower.contains('descargar') || lower.contains('download') || lower.contains('qr');
+    if (!looksLikeDownloadPage || _autoSavedOnThisPage || _downloading) return;
+
+    try {
+      final raw = await _controller.runJavaScriptReturningResult('''
+(() => {
+  const imgs = Array.from(document.querySelectorAll('img')).filter(i => i.width > 200 && i.height > 200);
+  return imgs.length > 0;
+})()
+''');
+      final hasLargeImg = raw.toString().toLowerCase().contains('true');
+      if (!hasLargeImg) return;
+      _autoSavedOnThisPage = true;
+      await _downloadQrFromDom();
+    } catch (_) {}
+  }
+
   Future<void> _installDownloadHook() async {
     try {
       await _controller.runJavaScript('''
@@ -211,7 +231,13 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (p) => setState(() => progress = p),
-          onPageFinished: (_) => _installDownloadHook(),
+          onPageFinished: (url) async {
+            _autoSavedOnThisPage = false;
+            await _installDownloadHook();
+            await Future.delayed(const Duration(milliseconds: 350));
+            if (!mounted) return;
+            await _autoSaveIfQrPage(url);
+          },
           onNavigationRequest: (request) {
             if (_looksLikeDownload(request.url)) {
               _downloadToDownloads(request.url);
