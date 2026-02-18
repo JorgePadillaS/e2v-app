@@ -111,6 +111,33 @@ class _WalletPageState extends State<WalletPage> {
     return ref;
   }
 
+  String _invoiceViewUrl(String rawUrl) {
+    final u = rawUrl.trim();
+    if (u.isEmpty) return '';
+    final lower = u.toLowerCase();
+    if (lower.endsWith('.pdf') || lower.contains('factura') || lower.contains('invoice')) {
+      return 'https://docs.google.com/gview?embedded=1&url=${Uri.encodeComponent(u)}';
+    }
+    return u;
+  }
+
+  String _paymentUrlOf(Map<String, dynamic> it) {
+    final raw = it['metadata'];
+    if (raw is Map) {
+      final reg = raw['register_response'];
+      if (reg is Map && reg['url_pasarela_pagos'] != null) return reg['url_pasarela_pagos'].toString();
+      if (raw['url_pasarela_pagos'] != null) return raw['url_pasarela_pagos'].toString();
+    }
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final sub = raw.substring(raw.indexOf('url_pasarela_pagos'));
+        final q = RegExp(r'url_pasarela_pagos"\s*:\s*"([^"]+)"').firstMatch(sub);
+        if (q != null) return q.group(1)!.replaceAll('\\/', '/');
+      } catch (_) {}
+    }
+    return '';
+  }
+
   (Color, String) _statusStyle(String status) {
     if (status == 'COMPLETED' || status == 'SUCCESS' || status == 'PAID' || status == 'PAGADO') {
       return (Colors.green, 'PROCESADO');
@@ -121,7 +148,7 @@ class _WalletPageState extends State<WalletPage> {
     return (Colors.amber, 'EN PROCESO');
   }
 
-  Future<void> _confirmAndOpenLibelula() async {
+  Future<void> _confirmAndOpenLibelula({VoidCallback? onSuccess}) async {
     final amount = _manualAmount();
     if (amount <= 0) {
       showAppToast(context, 'Primero indica un monto de recarga', type: AppToastType.warning);
@@ -132,10 +159,10 @@ class _WalletPageState extends State<WalletPage> {
       return;
     }
 
-    await _openLibelula(amount);
+    await _openLibelula(amount, onSuccess: onSuccess);
   }
 
-  Future<void> _openLibelula(double amount) async {
+  Future<void> _openLibelula(double amount, {VoidCallback? onSuccess}) async {
     // toast handled via showAppToast
     final navigator = Navigator.of(context, rootNavigator: true);
     try {
@@ -168,8 +195,9 @@ class _WalletPageState extends State<WalletPage> {
             if (!mounted) return;
             setState(() => _lastCompletedTxId = txId);
             navigator.maybePop();
-            showAppToast(context, 'Pago confirmado. Crédito aplicado.', type: AppToastType.success);
+            showAppToast(context, 'Recarga exitosa: Bs ${amount.toStringAsFixed(2)}', type: AppToastType.success);
             await _reload();
+            onSuccess?.call();
           } else if (st == 'FAILED') {
             timer?.cancel();
             if (!mounted) return;
@@ -286,39 +314,55 @@ class _WalletPageState extends State<WalletPage> {
         const SizedBox(height: 14),
         const Text('Datos para la Factura', style: TextStyle(fontSize: 18, color: Colors.grey)),
         const SizedBox(height: 10),
-        Text('Tipo: $billingDocType', style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 6),
-        Text('Documento: ${documentoCtrl.text.isEmpty ? '-' : documentoCtrl.text}', style: const TextStyle(fontSize: 16)),
-        if (billingDocType == 'CI') ...[
-          const SizedBox(height: 6),
-          Text('Complemento: ${complementoCtrl.text.isEmpty ? '-' : complementoCtrl.text}', style: const TextStyle(fontSize: 16)),
-        ],
-        const SizedBox(height: 6),
-        Text('Razón Social: ${razonSocialCtrl.text.isEmpty ? '-' : razonSocialCtrl.text}', style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: () async {
-            final result = await Navigator.of(context).push<Map<String, String>>(
-              MaterialPageRoute(
-                builder: (_) => BillingFlowPage(
-                  initialType: billingDocType,
-                  initialDocumento: documentoCtrl.text,
-                  initialComplemento: complementoCtrl.text,
-                  initialRazonSocial: razonSocialCtrl.text,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.45), width: 1.4),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Tipo: $billingDocType', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 6),
+              Text('Documento: ${documentoCtrl.text.isEmpty ? '-' : documentoCtrl.text}', style: const TextStyle(fontSize: 16)),
+              if (billingDocType == 'CI') ...[
+                const SizedBox(height: 6),
+                Text('Complemento: ${complementoCtrl.text.isEmpty ? '-' : complementoCtrl.text}', style: const TextStyle(fontSize: 16)),
+              ],
+              const SizedBox(height: 6),
+              Text('Razón Social: ${razonSocialCtrl.text.isEmpty ? '-' : razonSocialCtrl.text}', style: const TextStyle(fontSize: 16)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () async {
+              final result = await Navigator.of(context).push<Map<String, String>>(
+                MaterialPageRoute(
+                  builder: (_) => BillingFlowPage(
+                    initialType: billingDocType,
+                    initialDocumento: documentoCtrl.text,
+                    initialComplemento: complementoCtrl.text,
+                    initialRazonSocial: razonSocialCtrl.text,
+                  ),
                 ),
-              ),
-            );
-            if (result != null && mounted) {
-              setState(() {
-                billingDocType = result['doc_type'] ?? billingDocType;
-                documentoCtrl.text = result['documento'] ?? documentoCtrl.text;
-                complementoCtrl.text = result['complemento'] ?? complementoCtrl.text;
-                razonSocialCtrl.text = result['razon_social'] ?? razonSocialCtrl.text;
-              });
-            }
-          },
-          icon: const Icon(Icons.edit),
-          label: const Text('Modificar Datos de Facturación'),
+              );
+              if (result != null && mounted) {
+                setState(() {
+                  billingDocType = result['doc_type'] ?? billingDocType;
+                  documentoCtrl.text = result['documento'] ?? documentoCtrl.text;
+                  complementoCtrl.text = result['complemento'] ?? complementoCtrl.text;
+                  razonSocialCtrl.text = result['razon_social'] ?? razonSocialCtrl.text;
+                });
+              }
+            },
+            icon: const Icon(Icons.edit),
+            label: const Text('Modificar'),
+          ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -333,7 +377,18 @@ class _WalletPageState extends State<WalletPage> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: FilledButton(onPressed: _confirmAndOpenLibelula, child: const Text('Recargar')),
+              child: Builder(
+                builder: (modalContext) => FilledButton(
+                  onPressed: () => _confirmAndOpenLibelula(
+                    onSuccess: () {
+                      if (Navigator.of(modalContext).canPop()) {
+                        Navigator.of(modalContext).pop();
+                      }
+                    },
+                  ),
+                  child: const Text('Recargar'),
+                ),
+              ),
             ),
           ],
         ),
@@ -357,13 +412,62 @@ class _WalletPageState extends State<WalletPage> {
               .map((it) {
                 final st = _statusOf(it);
                 final (color, label) = _statusStyle(st);
-                return Card(
-                  child: ListTile(
-                    title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
-                    subtitle: Text('Código: ${_txCodeOf(it).isEmpty ? '-' : _txCodeOf(it)}'),
-                    trailing: Chip(
-                      label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                      backgroundColor: color,
+                final txId = (it['id'] as num?)?.toInt();
+                final url = _paymentUrlOf(it);
+
+                return Dismissible(
+                  key: ValueKey('pending_modal_${it['id']}'),
+                  background: Container(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    color: Colors.teal,
+                    child: const Row(
+                      children: [Icon(Icons.open_in_new, color: Colors.white), SizedBox(width: 8), Text('Continuar pago', style: TextStyle(color: Colors.white))],
+                    ),
+                  ),
+                  secondaryBackground: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    color: Colors.red,
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [Text('Eliminar', style: TextStyle(color: Colors.white)), SizedBox(width: 8), Icon(Icons.delete, color: Colors.white)],
+                    ),
+                  ),
+                  confirmDismiss: (direction) async {
+                    if (direction == DismissDirection.startToEnd) {
+                      if (url.isEmpty) {
+                        showAppToast(context, 'No hay URL para retomar pago', type: AppToastType.warning);
+                        return false;
+                      }
+                      await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => PaymentWebViewModal(url: url),
+                      );
+                      return false;
+                    }
+
+                    if (txId == null) return false;
+                    try {
+                      await widget.api.deletePendingLibelula(txId);
+                      if (!context.mounted) return false;
+                      showAppToast(context, 'Pendiente eliminado', type: AppToastType.success);
+                      await _reload(showLoader: true);
+                    } catch (e) {
+                      if (!context.mounted) return false;
+                      showAppToast(context, 'No se pudo eliminar: $e', type: AppToastType.error);
+                    }
+                    return false;
+                  },
+                  child: Card(
+                    child: ListTile(
+                      title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
+                      subtitle: Text('Código: ${_txCodeOf(it).isEmpty ? '-' : _txCodeOf(it)}'),
+                      trailing: Chip(
+                        label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                        backgroundColor: color,
+                      ),
                     ),
                   ),
                 );
@@ -384,13 +488,36 @@ class _WalletPageState extends State<WalletPage> {
               .map((it) {
                 final st = _statusOf(it);
                 final (color, label) = _statusStyle(st);
+                final invoiceUrlRaw = (it['invoice_url'] ?? '').toString();
                 return Card(
                   child: ListTile(
                     title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
                     subtitle: Text('Código: ${_txCodeOf(it).isEmpty ? '-' : _txCodeOf(it)}'),
-                    trailing: Chip(
-                      label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                      backgroundColor: color,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (invoiceUrlRaw.isNotEmpty)
+                          IconButton(
+                            tooltip: 'Ver factura',
+                            icon: const Icon(Icons.visibility_outlined),
+                            onPressed: () async {
+                              final invoiceUrl = _invoiceViewUrl(invoiceUrlRaw);
+                              if (invoiceUrl.isEmpty) return;
+                              await showDialog(
+                                context: context,
+                                barrierDismissible: true,
+                                builder: (_) => PaymentWebViewModal(
+                                  url: invoiceUrl,
+                                  title: 'Factura',
+                                ),
+                              );
+                            },
+                          ),
+                        Chip(
+                          label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                          backgroundColor: color,
+                        ),
+                      ],
                     ),
                   ),
                 );

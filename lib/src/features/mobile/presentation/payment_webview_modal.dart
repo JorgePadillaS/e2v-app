@@ -60,7 +60,22 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
               ),
             ),
             LinearProgressIndicator(value: progress < 100 ? progress / 100 : 1),
-            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.download_for_offline_outlined),
+                  label: const Text('Abrir en navegador para descargar QR/factura'),
+                  onPressed: () async {
+                    final uri = Uri.tryParse(widget.url);
+                    if (uri != null) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                ),
+              ),
+            ),
             Expanded(child: WebViewWidget(controller: _controller)),
           ],
         ),
