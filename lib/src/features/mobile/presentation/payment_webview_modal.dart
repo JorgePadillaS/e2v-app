@@ -101,27 +101,6 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     }
   }
 
-  Future<bool> _triggerInPageDownload() async {
-    try {
-      final result = await _controller.runJavaScriptReturningResult('''
-(() => {
-  const nodes = Array.from(document.querySelectorAll('a,button,input[type="button"],input[type="submit"]'));
-  const btn = nodes.find(el => {
-    const t = (el.innerText || el.textContent || el.value || '').toLowerCase();
-    return t.includes('descargar qr') || t.includes('descargar');
-  });
-  if (!btn) return false;
-  btn.click();
-  return true;
-})()
-''');
-      final ok = result.toString().toLowerCase().contains('true');
-      return ok;
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<void> _downloadQrFromDom() async {
     try {
       final raw = await _controller.runJavaScriptReturningResult('''
@@ -221,9 +200,11 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
         'E2VDownloadChannel',
-        onMessageReceived: (msg) {
+        onMessageReceived: (msg) async {
           if (msg.message == 'download_click') {
-            _downloadQrFromDom();
+            await Future.delayed(const Duration(milliseconds: 450));
+            if (!mounted) return;
+            await _downloadQrFromDom();
           }
         },
       )
@@ -267,30 +248,11 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
               ),
             ),
             LinearProgressIndicator(value: progress < 100 ? progress / 100 : 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: _downloading
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.download_for_offline_outlined),
-                  label: Text(_downloading ? 'Descargando...' : 'Descargar en Descargas'),
-                  onPressed: _downloading
-                      ? null
-                      : () async {
-                          final clicked = await _triggerInPageDownload();
-                          if (!context.mounted) return;
-                          if (clicked) {
-                            showAppToast(context, 'Generando descarga...', type: AppToastType.success);
-                            await Future.delayed(const Duration(milliseconds: 500));
-                            if (!context.mounted) return;
-                          }
-                          await _downloadQrFromDom();
-                        },
-                ),
+            if (_downloading)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(10, 8, 10, 4),
+                child: LinearProgressIndicator(minHeight: 3),
               ),
-            ),
             Expanded(child: WebViewWidget(controller: _controller)),
           ],
         ),
