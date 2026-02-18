@@ -60,6 +60,26 @@ class _WalletPageState extends State<WalletPage> {
     return 0;
   }
 
+  String _statusOf(Map<String, dynamic> it) {
+    final raw = (it['status'] ?? '').toString().toUpperCase().trim();
+    final txId = (it['id'] as num?)?.toInt();
+    if (raw.isEmpty || raw == '-') {
+      if (_lastCompletedTxId != null && txId == _lastCompletedTxId) return 'COMPLETED';
+      return 'PENDING';
+    }
+    return raw;
+  }
+
+  (Color, String) _statusStyle(String status) {
+    if (status == 'COMPLETED' || status == 'SUCCESS' || status == 'PAID' || status == 'PAGADO') {
+      return (Colors.green, 'PROCESADO');
+    }
+    if (status == 'FAILED' || status == 'REJECTED' || status == 'ERROR') {
+      return (Colors.red, 'FALLIDO');
+    }
+    return (Colors.amber, 'EN PROCESO');
+  }
+
   Future<void> _confirmAndOpenLibelula() async {
     final amount = _manualAmount();
     if (amount <= 0) {
@@ -273,17 +293,28 @@ class _WalletPageState extends State<WalletPage> {
               if (!snap.hasData) return const SizedBox.shrink();
               final rows = ((snap.data!['data'] as List?) ?? const [])
                   .map((e) => Map<String, dynamic>.from(e as Map))
-                  .where((e) => (e['status']?.toString().toUpperCase() ?? '') == 'PENDING')
+                  .where((e) {
+                    final st = _statusOf(e);
+                    return !(st == 'COMPLETED' || st == 'SUCCESS' || st == 'PAID' || st == 'PAGADO');
+                  })
                   .toList();
               if (rows.isEmpty) return const Card(child: Padding(padding: EdgeInsets.all(16), child: Text('No hay pendientes')));
               return Column(
                 children: rows
-                    .map((it) => Card(
-                          child: ListTile(
-                            title: Text('RECARGA ${it['amount']}'),
-                            subtitle: Text(it['created_at']?.toString() ?? ''),
+                    .map((it) {
+                      final st = _statusOf(it);
+                      final (color, label) = _statusStyle(st);
+                      return Card(
+                        child: ListTile(
+                          title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
+                          subtitle: Text(it['created_at']?.toString().replaceAll('T', ' ').replaceAll('.000000Z', '') ?? ''),
+                          trailing: Chip(
+                            label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                            backgroundColor: color,
                           ),
-                        ))
+                        ),
+                      );
+                    })
                     .toList(),
               );
             },
@@ -302,13 +333,18 @@ class _WalletPageState extends State<WalletPage> {
                     .take(5)
                     .map((it) {
                       final txId = (it['id'] as num?)?.toInt();
+                      final st = _statusOf(it);
+                      final (color, label) = _statusStyle(st);
                       final isRecentPaid = _lastCompletedTxId != null && txId == _lastCompletedTxId;
                       return Card(
                         color: isRecentPaid ? Colors.green.withValues(alpha: 0.18) : null,
                         child: ListTile(
-                          title: Text('RECARGA ${it['amount']}'),
-                          subtitle: Text(it['created_at']?.toString() ?? ''),
-                          trailing: Text((it['status'] ?? '-').toString()),
+                          title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
+                          subtitle: Text(it['created_at']?.toString().replaceAll('T', ' ').replaceAll('.000000Z', '') ?? ''),
+                          trailing: Chip(
+                            label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                            backgroundColor: color,
+                          ),
                         ),
                       );
                     })
