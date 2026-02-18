@@ -391,9 +391,29 @@ class _WalletPageState extends State<WalletPage> {
                                 Text('Factura: ${it['invoice_number']}'),
                             ],
                           ),
-                          trailing: Chip(
-                            label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                            backgroundColor: color,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if ((it['invoice_url'] ?? '').toString().isNotEmpty)
+                                IconButton(
+                                  tooltip: 'Ver factura',
+                                  icon: const Icon(Icons.visibility_outlined),
+                                  onPressed: () async {
+                                    await showDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      builder: (_) => PaymentWebViewModal(
+                                        url: it['invoice_url'].toString(),
+                                        title: 'Factura',
+                                      ),
+                                    );
+                                  },
+                                ),
+                              Chip(
+                                label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                                backgroundColor: color,
+                              ),
+                            ],
                           ),
                         ),
                       );

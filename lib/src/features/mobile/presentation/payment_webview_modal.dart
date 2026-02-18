@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewModal extends StatefulWidget {
-  const PaymentWebViewModal({super.key, required this.url});
+  const PaymentWebViewModal({super.key, required this.url, this.title = 'Pasarela Libélula'});
   final String url;
+  final String title;
 
   @override
   State<PaymentWebViewModal> createState() => _PaymentWebViewModalState();
@@ -37,8 +38,8 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  const Expanded(
-                    child: Text('Pasarela Libélula', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  Expanded(
+                    child: Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
