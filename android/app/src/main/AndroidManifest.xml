@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:label="e2v_app"
+        android:label="E2V App v4"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
