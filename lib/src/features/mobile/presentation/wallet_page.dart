@@ -17,6 +17,7 @@ class _WalletPageState extends State<WalletPage> {
   late Future<Map<String, dynamic>> _wallet;
   late Future<Map<String, dynamic>> _tx;
   final amountCtrl = TextEditingController(text: '10');
+  int? _lastCompletedTxId;
 
   Future<void> _openLibelula(double amount) async {
     final m = ScaffoldMessenger.of(context);
@@ -49,6 +50,7 @@ class _WalletPageState extends State<WalletPage> {
           if (st == 'COMPLETED') {
             timer?.cancel();
             if (!mounted) return;
+            setState(() => _lastCompletedTxId = txId);
             navigator.maybePop();
             await _reload();
             m.showSnackBar(const SnackBar(content: Text('✅ Pago confirmado. Crédito aplicado.')));
@@ -98,7 +100,15 @@ class _WalletPageState extends State<WalletPage> {
                         const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                         const SizedBox(width: 8),
                       ],
-                      Text(st),
+                      Text(
+                        st,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: st == 'COMPLETED'
+                              ? Colors.greenAccent
+                              : (st == 'FAILED' ? Colors.redAccent : null),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -196,7 +206,7 @@ class _WalletPageState extends State<WalletPage> {
               return Card(
                 child: ListTile(
                   title: const Text('Saldo'),
-                  subtitle: Text('${w['balance'] ?? 0} ${w['currency'] ?? ''}'),
+                  subtitle: Text('${((w['balance'] as num?) ?? 0).toStringAsFixed(2)} ${w['currency'] ?? ''}'),
                   trailing: Text('Límite: ${w['credit_limit'] ?? 0}'),
                 ),
               );
@@ -306,10 +316,20 @@ class _WalletPageState extends State<WalletPage> {
               return Column(
                 children: items.map((e) {
                   final it = Map<String, dynamic>.from(e as Map);
+                  final txId = (it['id'] as num?)?.toInt();
+                  final isRecentPaid = _lastCompletedTxId != null && txId == _lastCompletedTxId;
                   return Card(
+                    color: isRecentPaid ? Colors.green.withValues(alpha: 0.18) : null,
                     child: ListTile(
                       title: Text('${it['type'] ?? '-'}  ${it['amount'] ?? ''}'),
                       subtitle: Text(it['description']?.toString() ?? '-'),
+                      trailing: isRecentPaid
+                          ? const Chip(
+                              label: Text('Acreditado'),
+                              backgroundColor: Colors.green,
+                              labelStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            )
+                          : null,
                     ),
                   );
                 }).toList(),
