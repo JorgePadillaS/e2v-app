@@ -37,8 +37,18 @@ class MobileApi {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
-  Future<Map<String, dynamic>> libelulaCheckout(double amount) async {
-    final res = await _dio.post('/wallet/libelula/checkout', data: {'amount': amount});
+  Future<Map<String, dynamic>> libelulaCheckout(
+    double amount, {
+    String? razonSocial,
+    String? documento,
+    String? complemento,
+  }) async {
+    final res = await _dio.post('/wallet/libelula/checkout', data: {
+      'amount': amount,
+      if (razonSocial != null) 'razon_social': razonSocial,
+      if (documento != null) 'documento': documento,
+      if (complemento != null) 'complemento': complemento,
+    });
     return Map<String, dynamic>.from(res.data as Map);
   }
 

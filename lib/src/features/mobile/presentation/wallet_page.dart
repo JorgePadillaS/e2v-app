@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:e2v_app/src/features/mobile/presentation/payment_webview_page.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key, required this.api, this.displayName});
@@ -18,6 +18,9 @@ class _WalletPageState extends State<WalletPage> {
   late Future<Map<String, dynamic>> _wallet;
   late Future<Map<String, dynamic>> _tx;
   final amountCtrl = TextEditingController(text: '10');
+  final razonSocialCtrl = TextEditingController();
+  final documentoCtrl = TextEditingController(text: '');
+  final complementoCtrl = TextEditingController(text: '');
   final List<double> quickAmounts = const [10, 30, 60, 90, 150];
   double selectedAmount = 10;
   int? _lastCompletedTxId;
@@ -25,6 +28,7 @@ class _WalletPageState extends State<WalletPage> {
   @override
   void initState() {
     super.initState();
+    razonSocialCtrl.text = widget.displayName ?? '';
     _wallet = widget.api.wallet();
     _tx = widget.api.walletTransactions();
   }
@@ -32,6 +36,9 @@ class _WalletPageState extends State<WalletPage> {
   @override
   void dispose() {
     amountCtrl.dispose();
+    razonSocialCtrl.dispose();
+    documentoCtrl.dispose();
+    complementoCtrl.dispose();
     super.dispose();
   }
 
@@ -80,18 +87,22 @@ class _WalletPageState extends State<WalletPage> {
     final m = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
     try {
-      final res = await widget.api.libelulaCheckout(amount);
+      final res = await widget.api.libelulaCheckout(
+        amount,
+        razonSocial: razonSocialCtrl.text.trim(),
+        documento: documentoCtrl.text.trim(),
+        complemento: complementoCtrl.text.trim(),
+      );
       if (!mounted) return;
 
       final txId = (res['transaction_id'] as num?)?.toInt();
       final url = res['payment_url']?.toString() ?? '';
       final qr = res['qr_image']?.toString() ?? '';
 
-      if (url.isNotEmpty) {
-        final uri = Uri.tryParse(url);
-        if (uri != null) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
+      if (url.isNotEmpty && mounted) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => PaymentWebViewPage(url: url, title: 'Pago Libélula')),
+        );
       }
 
       final status = ValueNotifier<String>('PENDING');
@@ -176,10 +187,9 @@ class _WalletPageState extends State<WalletPage> {
             ),
             FilledButton(
               onPressed: () async {
-                final uri = Uri.tryParse(url);
-                if (uri != null) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => PaymentWebViewPage(url: url, title: 'Pago Libélula')),
+                );
               },
               child: const Text('Abrir pago'),
             ),
@@ -296,11 +306,20 @@ class _WalletPageState extends State<WalletPage> {
                 children: [
                   const Text('Datos para la Factura', style: TextStyle(fontSize: 20, color: Colors.grey)),
                   const SizedBox(height: 10),
-                  const Text('Documento: 10668541', style: TextStyle(fontSize: 18)),
+                  TextField(
+                    controller: documentoCtrl,
+                    decoration: const InputDecoration(labelText: 'Documento (NIT/CI)', border: OutlineInputBorder()),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Razon Social: ${widget.displayName ?? 'Cliente E2V'}', style: const TextStyle(fontSize: 18)),
-                  const SizedBox(height: 12),
-                  OutlinedButton(onPressed: () {}, child: const Text('Modificar Datos de Facturación')),
+                  TextField(
+                    controller: complementoCtrl,
+                    decoration: const InputDecoration(labelText: 'Complemento (opcional)', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: razonSocialCtrl,
+                    decoration: const InputDecoration(labelText: 'Razón social', border: OutlineInputBorder()),
+                  ),
                 ],
               ),
             ),
