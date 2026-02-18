@@ -31,7 +31,14 @@ class _WalletPageState extends State<WalletPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      m.showSnackBar(SnackBar(content: Text('Libélula error: $e')));
+      var msg = 'Error creando pago Libélula';
+      final raw = e.toString();
+      if (raw.contains('LIBELULA_APP_KEY no configurada')) {
+        msg = 'Libélula no está configurado aún en servidor (falta API key).';
+      } else if (raw.contains('422')) {
+        msg = 'Libélula rechazó la solicitud (422). Revisaré configuración/API key.';
+      }
+      m.showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
