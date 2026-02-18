@@ -214,6 +214,30 @@ class _NfcPageState extends State<NfcPage> {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () async {
+              final selected = await Navigator.of(context).push<int>(
+                MaterialPageRoute(
+                  builder: (_) => const QrConnectorSelectPage(
+                    chargeBoxId: 'DEMO-CP',
+                    stationName: 'Demo cargador',
+                    connectors: [
+                      {'connector_id': 1, 'type': 'GBT', 'status': 'AVAILABLE'},
+                      {'connector_id': 2, 'type': 'CCS2', 'status': 'OCCUPIED'},
+                    ],
+                  ),
+                ),
+              );
+              if (!context.mounted || selected == null) return;
+              showAppToast(context, 'Demo OK: conector $selected seleccionado (sin enviar start real)', type: AppToastType.success);
+            },
+            icon: const Icon(Icons.smart_display),
+            label: const Text('Demo'),
+          ),
+        ),
       ],
     );
   }

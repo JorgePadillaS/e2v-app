@@ -22,6 +22,15 @@ class E2VApp extends StatelessWidget {
           blendOnColors: true,
           useM2StyleDividerInM3: true,
         ),
+      ).copyWith(
+        cardTheme: CardThemeData(
+          elevation: 2,
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.grey.shade300, width: 1.2),
+          ),
+        ),
       ),
       darkTheme: FlexThemeData.dark(
         scheme: FlexScheme.mandyRed,
@@ -30,6 +39,16 @@ class E2VApp extends StatelessWidget {
           blendOnLevel: 20,
           blendOnColors: true,
           useM2StyleDividerInM3: true,
+        ),
+      ).copyWith(
+        scaffoldBackgroundColor: const Color(0xFF12131A),
+        cardTheme: CardThemeData(
+          elevation: 4,
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.18), width: 1.3),
+          ),
         ),
       ),
       home: const AuthGate(),
