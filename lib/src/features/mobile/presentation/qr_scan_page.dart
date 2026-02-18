@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QrScanPage extends StatefulWidget {
   const QrScanPage({super.key});
@@ -11,7 +10,7 @@ class QrScanPage extends StatefulWidget {
 }
 
 class _QrScanPageState extends State<QrScanPage> {
-  bool handled = false;
+  final ctrl = TextEditingController();
 
   Map<String, dynamic> _parse(String raw) {
     try {
@@ -40,15 +39,33 @@ class _QrScanPageState extends State<QrScanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Escanear QR del cargador')),
-      body: MobileScanner(
-        onDetect: (capture) {
-          if (handled) return;
-          final code = capture.barcodes.first.rawValue;
-          if (code == null || code.isEmpty) return;
-          handled = true;
-          final parsed = _parse(code);
-          Navigator.pop(context, parsed);
-        },
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Pega el contenido del QR del cargador para continuar.'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: ctrl,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Contenido QR',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () {
+                final parsed = _parse(ctrl.text.trim());
+                Navigator.pop(context, parsed);
+              },
+              icon: const Icon(Icons.qr_code_2),
+              label: const Text('Procesar QR'),
+            ),
+          ],
+        ),
       ),
     );
   }

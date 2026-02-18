@@ -30,6 +30,7 @@ class WalletPage extends StatefulWidget {
 class _WalletPageState extends State<WalletPage> {
   late Future<Map<String, dynamic>> _wallet;
   late Future<Map<String, dynamic>> _tx;
+  bool _isLoadingData = true;
   final amountCtrl = TextEditingController(text: '10');
   final razonSocialCtrl = TextEditingController();
   final documentoCtrl = TextEditingController(text: '');
@@ -52,6 +53,7 @@ class _WalletPageState extends State<WalletPage> {
         : 'NIT';
     _wallet = widget.api.wallet();
     _tx = widget.api.walletTransactions();
+    _reload(showLoader: true);
   }
 
   @override
@@ -63,12 +65,23 @@ class _WalletPageState extends State<WalletPage> {
     super.dispose();
   }
 
-  Future<void> _reload() async {
+  Future<void> _reload({bool showLoader = false}) async {
+    if (showLoader && mounted) {
+      setState(() => _isLoadingData = true);
+    }
+
     setState(() {
       _wallet = widget.api.wallet();
       _tx = widget.api.walletTransactions();
     });
-    await Future.wait([_wallet, _tx]);
+
+    try {
+      await Future.wait([_wallet, _tx]);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingData = false);
+      }
+    }
   }
 
   double _manualAmount() {
@@ -214,9 +227,11 @@ class _WalletPageState extends State<WalletPage> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _reload,
-      child: ListView(
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () => _reload(showLoader: true),
+          child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const Text('Recarga tu Crédito', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
@@ -315,8 +330,10 @@ class _WalletPageState extends State<WalletPage> {
                   Text('Tipo: $billingDocType', style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 6),
                   Text('Documento: ${documentoCtrl.text.isEmpty ? '-' : documentoCtrl.text}', style: const TextStyle(fontSize: 16)),
-                  const SizedBox(height: 6),
-                  Text('Complemento: ${complementoCtrl.text.isEmpty ? '-' : complementoCtrl.text}', style: const TextStyle(fontSize: 16)),
+                  if (billingDocType == 'CI') ...[
+                    const SizedBox(height: 6),
+                    Text('Complemento: ${complementoCtrl.text.isEmpty ? '-' : complementoCtrl.text}', style: const TextStyle(fontSize: 16)),
+                  ],
                   const SizedBox(height: 6),
                   Text('Razón Social: ${razonSocialCtrl.text.isEmpty ? '-' : razonSocialCtrl.text}', style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 12),
@@ -540,6 +557,15 @@ class _WalletPageState extends State<WalletPage> {
           ),
         ],
       ),
+        ),
+        if (_isLoadingData)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.12),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+          ),
+      ],
     );
   }
 }

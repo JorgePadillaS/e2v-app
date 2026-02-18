@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import 'package:e2v_app/src/features/mobile/presentation/qr_connector_select_page.dart';
 import 'package:e2v_app/src/features/mobile/presentation/qr_scan_page.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
@@ -114,7 +115,7 @@ class _NfcPageState extends State<NfcPage> {
 
     if (!mounted || result == null) return;
     final chargeBoxId = (result['charge_box_id'] ?? '').toString();
-    final connectorId = result['connector_id'] as int?;
+    final initialConnectorId = result['connector_id'] as int?;
 
     if (chargeBoxId.isEmpty) {
       showAppToast(context, 'QR inválido: falta charge_box_id', type: AppToastType.error);
@@ -134,7 +135,24 @@ class _NfcPageState extends State<NfcPage> {
       }
 
       final stationId = (match['id'] as num).toInt();
-      await widget.api.startStation(stationId, connectorId: connectorId);
+      final connectors = ((match['connectors'] as List?) ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+
+      final selectedConnectorId = await Navigator.of(context).push<int>(
+        MaterialPageRoute(
+          builder: (_) => QrConnectorSelectPage(
+            chargeBoxId: chargeBoxId,
+            stationName: match['name']?.toString() ?? 'Estación',
+            connectors: connectors,
+            initialConnectorId: initialConnectorId,
+          ),
+        ),
+      );
+
+      if (!mounted || selectedConnectorId == null) return;
+
+      await widget.api.startStation(stationId, connectorId: selectedConnectorId);
       if (!mounted) return;
       showAppToast(context, 'Solicitud de carga enviada', type: AppToastType.success);
     } catch (e) {
