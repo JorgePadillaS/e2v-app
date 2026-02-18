@@ -131,6 +131,10 @@ class _WalletPageState extends State<WalletPage> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Primero indica un monto de recarga')));
       return;
     }
+    if (amount < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Monto mínimo para Libélula: Bs 1.00')));
+      return;
+    }
 
     await _openLibelula(amount);
   }
