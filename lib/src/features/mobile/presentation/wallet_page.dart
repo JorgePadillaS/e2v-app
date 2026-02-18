@@ -93,6 +93,16 @@ class _WalletPageState extends State<WalletPage> {
     return ref;
   }
 
+  String _invoiceViewUrl(String rawUrl) {
+    final u = rawUrl.trim();
+    if (u.isEmpty) return '';
+    final lower = u.toLowerCase();
+    if (lower.endsWith('.pdf') || lower.contains('factura') || lower.contains('invoice')) {
+      return 'https://docs.google.com/gview?embedded=1&url=${Uri.encodeComponent(u)}';
+    }
+    return u;
+  }
+
   String _paymentUrlOf(Map<String, dynamic> it) {
     final raw = it['metadata'];
     if (raw is Map) {
@@ -489,11 +499,13 @@ class _WalletPageState extends State<WalletPage> {
                                   tooltip: 'Ver factura',
                                   icon: const Icon(Icons.visibility_outlined),
                                   onPressed: () async {
+                                    final invoiceUrl = _invoiceViewUrl(it['invoice_url'].toString());
+                                    if (invoiceUrl.isEmpty) return;
                                     await showDialog(
                                       context: context,
                                       barrierDismissible: true,
                                       builder: (_) => PaymentWebViewModal(
-                                        url: it['invoice_url'].toString(),
+                                        url: invoiceUrl,
                                         title: 'Factura',
                                       ),
                                     );

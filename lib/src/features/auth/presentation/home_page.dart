@@ -1,5 +1,6 @@
 import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import 'package:e2v_app/src/features/mobile/presentation/nfc_page.dart';
 import 'package:e2v_app/src/features/mobile/presentation/sessions_page.dart';
 import 'package:e2v_app/src/features/mobile/presentation/stations_page.dart';
 import 'package:e2v_app/src/features/mobile/presentation/wallet_page.dart';
@@ -23,6 +24,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     final token = widget.data['token']?.toString() ?? '';
     final api = MobileApi(token);
 
+    final assignedTag = (widget.data['rfid_tag'] is Map)
+        ? (widget.data['rfid_tag']['tag_code']?.toString() ?? '')
+        : '';
+
     final pages = [
       StationsPage(api: api),
       WalletPage(
@@ -32,6 +37,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         initialBillingComplement: user['billing_complement']?.toString(),
         initialBillingRazonSocial: user['billing_razon_social']?.toString(),
       ),
+      NfcPage(assignedTag: assignedTag),
       SessionsPage(api: api),
     ];
 
@@ -52,6 +58,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.ev_station), label: 'Stations'),
           NavigationDestination(icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
+          NavigationDestination(icon: Icon(Icons.nfc), label: 'NFC'),
           NavigationDestination(icon: Icon(Icons.history), label: 'Sessions'),
         ],
       ),
