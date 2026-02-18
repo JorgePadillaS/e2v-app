@@ -452,7 +452,10 @@ class _WalletPageState extends State<WalletPage> {
                     try {
                       await widget.api.deletePendingLibelula(txId);
                       if (!context.mounted) return false;
-                      showAppToast(context, 'Pendiente eliminado', type: AppToastType.success);
+                      showAppToast(context, 'Transacción eliminada', type: AppToastType.success);
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
                       await _reload(showLoader: true);
                     } catch (e) {
                       if (!context.mounted) return false;
