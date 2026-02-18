@@ -60,6 +60,9 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
   Future<void> _downloadToDownloads(String url) async {
     if (_downloading) return;
     setState(() => _downloading = true);
+    if (mounted) {
+      showAppToast(context, 'Descargando QR... espera un momento', type: AppToastType.warning);
+    }
 
     try {
       if (Platform.isAndroid) {
@@ -170,6 +173,9 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
       if (src.startsWith('data:image/')) {
         if (_downloading) return;
         setState(() => _downloading = true);
+        if (mounted) {
+          showAppToast(context, 'Descargando QR... espera un momento', type: AppToastType.warning);
+        }
         try {
           final metaAndData = src.split(',');
           if (metaAndData.length < 2) throw Exception('data URL inválida');
