@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 
@@ -12,29 +14,65 @@ class NfcPage extends StatefulWidget {
 }
 
 class _NfcPageState extends State<NfcPage> {
-  String status = 'Listo para escanear';
+  String status = 'Acerca tu móvil al cargador para habilitar la carga';
   String lastRead = '-';
   bool scanning = false;
+  bool matched = false;
+  bool pulse = false;
+  Timer? pulseTimer;
 
   String _hex(Uint8List bytes) => bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toUpperCase();
-
   String _norm(String s) => s.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 350), _startScan);
+  }
+
+  @override
+  void dispose() {
+    pulseTimer?.cancel();
+    NfcManager.instance.stopSession();
+    super.dispose();
+  }
+
+  void _startPulse() {
+    pulseTimer?.cancel();
+    pulseTimer = Timer.periodic(const Duration(milliseconds: 700), (_) {
+      if (!mounted) return;
+      setState(() => pulse = !pulse);
+    });
+  }
+
+  void _stopPulse() {
+    pulseTimer?.cancel();
+    if (mounted) setState(() => pulse = false);
+  }
 
   Future<void> _startScan() async {
     final available = await NfcManager.instance.isAvailable();
     if (!available) {
-      setState(() => status = 'NFC no disponible en este dispositivo');
+      if (!mounted) return;
+      setState(() {
+        scanning = false;
+        matched = false;
+        status = 'NFC no disponible en este dispositivo';
+      });
+      showAppToast(context, 'NFC no disponible', type: AppToastType.error);
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       scanning = true;
-      status = 'Acerca el celular al lector/tag NFC...';
+      matched = false;
+      status = 'Acerca tu móvil al cargador para habilitar la carga';
     });
+    _startPulse();
 
     NfcManager.instance.startSession(onDiscovered: (tag) async {
       String? uid;
-
       final data = tag.data;
       if (data['nfca']?['identifier'] != null) {
         uid = _hex(Uint8List.fromList(List<int>.from(data['nfca']['identifier'])));
@@ -45,78 +83,65 @@ class _NfcPageState extends State<NfcPage> {
       }
 
       uid ??= 'UNKNOWN';
-
       final ok = _norm(uid) == _norm(widget.assignedTag);
 
-      if (mounted) {
-        setState(() {
-          lastRead = uid!;
-          status = ok
-              ? '✅ Tag válido para esta cuenta'
-              : '❌ Tag leído no coincide con el asignado';
-          scanning = false;
-        });
-      }
-
       await NfcManager.instance.stopSession();
-    });
-  }
+      if (!mounted) return;
+      _stopPulse();
 
-  Future<void> _stopScan() async {
-    await NfcManager.instance.stopSession();
-    if (!mounted) return;
-    setState(() {
-      scanning = false;
-      status = 'Escaneo detenido';
+      setState(() {
+        lastRead = uid!;
+        scanning = false;
+        matched = ok;
+        status = ok ? 'Lectura correcta ✅ Carga habilitada' : 'Tag no coincide con la cuenta';
+      });
+
+      if (ok) {
+        showAppToast(context, 'Lectura correcta', type: AppToastType.success);
+      } else {
+        showAppToast(context, 'Tag incorrecto', type: AppToastType.error);
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final chargerColor = matched
+        ? Colors.green
+        : (scanning ? (pulse ? Colors.grey.shade400 : Colors.grey.shade700) : Colors.grey.shade600);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text('NFC', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Card(
-          child: ListTile(
-            title: const Text('Tag asignado a tu cuenta'),
-            subtitle: Text(widget.assignedTag.isEmpty ? 'Sin tag asignado' : widget.assignedTag),
+        const Text('Pase NFC', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        Center(
+          child: AnimatedOpacity(
+            opacity: scanning ? (pulse ? 0.45 : 1) : 1,
+            duration: const Duration(milliseconds: 350),
+            child: Icon(Icons.ev_station, size: 160, color: chargerColor),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Card(
-          child: ListTile(
-            title: const Text('Último tag leído'),
-            subtitle: Text(lastRead),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: ListTile(
-            title: const Text('Estado'),
-            subtitle: Text(status),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: scanning ? null : _startScan,
-                icon: const Icon(Icons.nfc),
-                label: const Text('Escanear NFC'),
-              ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Text(status, textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                Text('Tag asignado: ${widget.assignedTag.isEmpty ? '-' : widget.assignedTag}'),
+                const SizedBox(height: 6),
+                Text('Último leído: $lastRead'),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: scanning ? _stopScan : null,
-                icon: const Icon(Icons.stop),
-                label: const Text('Detener'),
-              ),
-            ),
-          ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: scanning ? null : _startScan,
+          icon: const Icon(Icons.nfc),
+          label: const Text('Reintentar lectura NFC'),
         ),
       ],
     );

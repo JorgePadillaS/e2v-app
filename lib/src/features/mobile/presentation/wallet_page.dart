@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter/material.dart';
-// removed services import
 import 'package:e2v_app/src/features/mobile/presentation/payment_webview_modal.dart';
 
 class WalletPage extends StatefulWidget {
@@ -138,11 +138,11 @@ class _WalletPageState extends State<WalletPage> {
   Future<void> _confirmAndOpenLibelula() async {
     final amount = _manualAmount();
     if (amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Primero indica un monto de recarga')));
+      showAppToast(context, 'Primero indica un monto de recarga', type: AppToastType.warning);
       return;
     }
     if (amount < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Monto mínimo para Libélula: Bs 1.00')));
+      showAppToast(context, 'Monto mínimo para Libélula: Bs 1.00', type: AppToastType.warning);
       return;
     }
 
@@ -150,7 +150,7 @@ class _WalletPageState extends State<WalletPage> {
   }
 
   Future<void> _openLibelula(double amount) async {
-    final m = ScaffoldMessenger.of(context);
+    // toast handled via showAppToast
     final navigator = Navigator.of(context, rootNavigator: true);
     try {
       final res = await widget.api.libelulaCheckout(
@@ -165,7 +165,7 @@ class _WalletPageState extends State<WalletPage> {
       final url = res['payment_url']?.toString() ?? '';
 
       if (url.isEmpty) {
-        m.showSnackBar(const SnackBar(content: Text('No llegó URL de pago de Libélula')));
+        showAppToast(context, 'No llegó URL de pago de Libélula', type: AppToastType.error);
         return;
       }
 
@@ -181,13 +181,13 @@ class _WalletPageState extends State<WalletPage> {
             if (!mounted) return;
             setState(() => _lastCompletedTxId = txId);
             navigator.maybePop();
+            showAppToast(context, 'Pago confirmado. Crédito aplicado.', type: AppToastType.success);
             await _reload();
-            m.showSnackBar(const SnackBar(content: Text('✅ Pago confirmado. Crédito aplicado.')));
           } else if (st == 'FAILED') {
             timer?.cancel();
             if (!mounted) return;
             navigator.maybePop();
-            m.showSnackBar(const SnackBar(content: Text('❌ Pago fallido o rechazado.')));
+            showAppToast(context, 'Pago fallido o rechazado.', type: AppToastType.error);
           }
         } catch (_) {}
       }
@@ -202,7 +202,7 @@ class _WalletPageState extends State<WalletPage> {
       timer.cancel();
     } catch (e) {
       if (!mounted) return;
-      m.showSnackBar(SnackBar(content: Text('Error Libélula: $e')));
+      showAppToast(context, 'Error Libélula: $e', type: AppToastType.error);
     }
   }
 
@@ -416,7 +416,7 @@ class _WalletPageState extends State<WalletPage> {
                           final messenger = ScaffoldMessenger.of(context);
                           if (direction == DismissDirection.startToEnd) {
                             if (url.isEmpty) {
-                              messenger.showSnackBar(const SnackBar(content: Text('No hay URL para retomar pago')));
+                              showAppToast(context, 'No hay URL para retomar pago', type: AppToastType.warning);
                               return false;
                             }
                             await showDialog(
@@ -430,12 +430,24 @@ class _WalletPageState extends State<WalletPage> {
                           if (txId == null) return false;
                           try {
                             await widget.api.deletePendingLibelula(txId);
-                            await _reload();
                             if (!mounted) return false;
-                            messenger.showSnackBar(const SnackBar(content: Text('Pendiente eliminado')));
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: const Text('Pendiente eliminado'),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            await _reload();
                           } catch (e) {
                             if (!mounted) return false;
-                            messenger.showSnackBar(SnackBar(content: Text('No se pudo eliminar: $e')));
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text('No se pudo eliminar: $e'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
                           }
                           return false;
                         },
