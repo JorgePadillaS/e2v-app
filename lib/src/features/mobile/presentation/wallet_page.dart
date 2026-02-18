@@ -12,6 +12,7 @@ class WalletPage extends StatefulWidget {
 class _WalletPageState extends State<WalletPage> {
   late Future<Map<String, dynamic>> _wallet;
   late Future<Map<String, dynamic>> _tx;
+  final amountCtrl = TextEditingController(text: '10');
 
   Future<void> _openLibelula(double amount) async {
     final m = ScaffoldMessenger.of(context);
@@ -42,11 +43,21 @@ class _WalletPageState extends State<WalletPage> {
     }
   }
 
+  double _manualAmount() {
+    return double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0;
+  }
+
   @override
   void initState() {
     super.initState();
     _wallet = widget.api.wallet();
     _tx = widget.api.walletTransactions();
+  }
+
+  @override
+  void dispose() {
+    amountCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _reload() async {
@@ -79,6 +90,49 @@ class _WalletPageState extends State<WalletPage> {
             },
           ),
           const SizedBox(height: 10),
+          TextField(
+            controller: amountCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Monto manual (BOB)',
+              hintText: 'Ej: 35.5',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              FilledButton(
+                onPressed: () async {
+                  final m = ScaffoldMessenger.of(context);
+                  final amount = _manualAmount();
+                  if (amount <= 0) {
+                    m.showSnackBar(const SnackBar(content: Text('Ingresa un monto válido')));
+                    return;
+                  }
+                  await widget.api.topup(amount);
+                  await _reload();
+                  if (!mounted) return;
+                  m.showSnackBar(SnackBar(content: Text('Recarga local +$amount aplicada')));
+                },
+                child: const Text('Local manual'),
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  final m = ScaffoldMessenger.of(context);
+                  final amount = _manualAmount();
+                  if (amount <= 0) {
+                    m.showSnackBar(const SnackBar(content: Text('Ingresa un monto válido')));
+                    return;
+                  }
+                  await _openLibelula(amount);
+                },
+                child: const Text('Libélula manual'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
