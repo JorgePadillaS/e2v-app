@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:e2v_app/src/features/mobile/presentation/payment_webview_page.dart';
+import 'package:e2v_app/src/features/mobile/presentation/payment_webview_modal.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key, required this.api, this.displayName});
@@ -86,11 +86,7 @@ class _WalletPageState extends State<WalletPage> {
       final url = res['payment_url']?.toString() ?? '';
       final qr = res['qr_image']?.toString() ?? '';
 
-      if (url.isNotEmpty && mounted) {
-        await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PaymentWebViewPage(url: url, title: 'Pago Libélula')),
-        );
-      }
+      // Payment page opens only when user taps "Abrir pago" in the modal.
 
       final status = ValueNotifier<String>('PENDING');
       Timer? timer;
@@ -174,8 +170,10 @@ class _WalletPageState extends State<WalletPage> {
             ),
             FilledButton(
               onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => PaymentWebViewPage(url: url, title: 'Pago Libélula')),
+                await showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => PaymentWebViewModal(url: url),
                 );
               },
               child: const Text('Abrir pago'),
