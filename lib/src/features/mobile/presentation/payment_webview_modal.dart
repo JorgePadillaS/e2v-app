@@ -101,6 +101,27 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     }
   }
 
+  Future<bool> _triggerInPageDownload() async {
+    try {
+      final result = await _controller.runJavaScriptReturningResult('''
+(() => {
+  const nodes = Array.from(document.querySelectorAll('a,button,input[type="button"],input[type="submit"]'));
+  const btn = nodes.find(el => {
+    const t = (el.innerText || el.textContent || el.value || '').toLowerCase();
+    return t.includes('descargar qr') || t.includes('descargar');
+  });
+  if (!btn) return false;
+  btn.click();
+  return true;
+})()
+''');
+      final ok = result.toString().toLowerCase().contains('true');
+      return ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _downloadQrFromDom() async {
     try {
       final raw = await _controller.runJavaScriptReturningResult('''
@@ -238,7 +259,17 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
                       ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.download_for_offline_outlined),
                   label: Text(_downloading ? 'Descargando...' : 'Descargar en Descargas'),
-                  onPressed: _downloading ? null : _downloadQrFromDom,
+                  onPressed: _downloading
+                      ? null
+                      : () async {
+                          final clicked = await _triggerInPageDownload();
+                          if (!context.mounted) return;
+                          if (clicked) {
+                            showAppToast(context, 'Solicitud de descarga enviada', type: AppToastType.success);
+                            return;
+                          }
+                          await _downloadQrFromDom();
+                        },
                 ),
               ),
             ),
