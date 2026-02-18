@@ -25,7 +25,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     final pages = [
       StationsPage(api: api),
-      WalletPage(api: api),
+      WalletPage(api: api, displayName: user['name']?.toString()),
       SessionsPage(api: api),
     ];
 
