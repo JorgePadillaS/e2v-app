@@ -7,6 +7,7 @@ class MobileApi {
           baseUrl: AppConfig.apiBaseUrl,
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'Authorization': 'Bearer $token',
           },
           connectTimeout: const Duration(seconds: 12),

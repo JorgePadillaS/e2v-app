@@ -4,7 +4,10 @@ import 'package:e2v_app/src/core/config/app_config.dart';
 class AuthApi {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: AppConfig.apiBaseUrl,
-    headers: {'Content-Type': 'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
     connectTimeout: const Duration(seconds: 12),
     receiveTimeout: const Duration(seconds: 12),
   ));
