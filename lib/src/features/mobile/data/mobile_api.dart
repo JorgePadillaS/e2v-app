@@ -31,6 +31,11 @@ class MobileApi {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  Future<Map<String, dynamic>> topup(double amount) async {
+    final res = await _dio.post('/wallet/topup', data: {'amount': amount});
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<Map<String, dynamic>> sessions() async {
     final res = await _dio.get('/sessions');
     return Map<String, dynamic>.from(res.data as Map);

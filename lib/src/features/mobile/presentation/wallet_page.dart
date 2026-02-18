@@ -50,6 +50,42 @@ class _WalletPageState extends State<WalletPage> {
             },
           ),
           const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: [
+              FilledButton(
+                onPressed: () async {
+                  final m = ScaffoldMessenger.of(context);
+                  await widget.api.topup(10);
+                  await _reload();
+                  if (!mounted) return;
+                  m.showSnackBar(const SnackBar(content: Text('Recarga +10 aplicada')));
+                },
+                child: const Text('+10'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final m = ScaffoldMessenger.of(context);
+                  await widget.api.topup(20);
+                  await _reload();
+                  if (!mounted) return;
+                  m.showSnackBar(const SnackBar(content: Text('Recarga +20 aplicada')));
+                },
+                child: const Text('+20'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final m = ScaffoldMessenger.of(context);
+                  await widget.api.topup(50);
+                  await _reload();
+                  if (!mounted) return;
+                  m.showSnackBar(const SnackBar(content: Text('Recarga +50 aplicada')));
+                },
+                child: const Text('+50'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           const Text('Movimientos', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           FutureBuilder<Map<String, dynamic>>(
