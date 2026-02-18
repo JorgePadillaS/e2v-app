@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter/material.dart';
+import 'package:e2v_app/src/features/mobile/presentation/billing_flow_page.dart';
 import 'package:e2v_app/src/features/mobile/presentation/payment_webview_modal.dart';
 
 class WalletPage extends StatefulWidget {
@@ -11,12 +12,14 @@ class WalletPage extends StatefulWidget {
     required this.api,
     this.displayName,
     this.initialBillingDocument,
+    this.initialBillingDocType,
     this.initialBillingComplement,
     this.initialBillingRazonSocial,
   });
   final MobileApi api;
   final String? displayName;
   final String? initialBillingDocument;
+  final String? initialBillingDocType;
   final String? initialBillingComplement;
   final String? initialBillingRazonSocial;
 
@@ -34,7 +37,7 @@ class _WalletPageState extends State<WalletPage> {
   final List<double> quickAmounts = const [10, 30, 60, 90, 150];
   double selectedAmount = 10;
   int? _lastCompletedTxId;
-  bool isEditingBilling = false;
+  String billingDocType = 'NIT';
 
   @override
   void initState() {
@@ -44,7 +47,9 @@ class _WalletPageState extends State<WalletPage> {
         : (widget.displayName ?? '');
     documentoCtrl.text = widget.initialBillingDocument ?? '';
     complementoCtrl.text = widget.initialBillingComplement ?? '';
-    isEditingBilling = documentoCtrl.text.isEmpty || razonSocialCtrl.text.isEmpty;
+    billingDocType = (widget.initialBillingDocType == 'CI' || widget.initialBillingDocType == 'NIT')
+        ? widget.initialBillingDocType!
+        : 'NIT';
     _wallet = widget.api.wallet();
     _tx = widget.api.walletTransactions();
   }
@@ -158,6 +163,7 @@ class _WalletPageState extends State<WalletPage> {
         razonSocial: razonSocialCtrl.text.trim(),
         documento: documentoCtrl.text.trim(),
         complemento: complementoCtrl.text.trim(),
+        docType: billingDocType,
       );
       if (!mounted) return;
 
@@ -306,46 +312,42 @@ class _WalletPageState extends State<WalletPage> {
                 children: [
                   const Text('Datos para la Factura', style: TextStyle(fontSize: 20, color: Colors.grey)),
                   const SizedBox(height: 10),
-                  if (!isEditingBilling) ...[
-                    Text('Documento: ${documentoCtrl.text.isEmpty ? '-' : documentoCtrl.text}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 6),
-                    Text('Complemento: ${complementoCtrl.text.isEmpty ? '-' : complementoCtrl.text}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 6),
-                    Text('Razón Social: ${razonSocialCtrl.text.isEmpty ? '-' : razonSocialCtrl.text}', style: const TextStyle(fontSize: 16)),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        onPressed: () => setState(() => isEditingBilling = true),
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Editar datos'),
-                      ),
+                  Text('Tipo: $billingDocType', style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 6),
+                  Text('Documento: ${documentoCtrl.text.isEmpty ? '-' : documentoCtrl.text}', style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 6),
+                  Text('Complemento: ${complementoCtrl.text.isEmpty ? '-' : complementoCtrl.text}', style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 6),
+                  Text('Razón Social: ${razonSocialCtrl.text.isEmpty ? '-' : razonSocialCtrl.text}', style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await Navigator.of(context).push<Map<String, String>>(
+                          MaterialPageRoute(
+                            builder: (_) => BillingFlowPage(
+                              initialType: billingDocType,
+                              initialDocumento: documentoCtrl.text,
+                              initialComplemento: complementoCtrl.text,
+                              initialRazonSocial: razonSocialCtrl.text,
+                            ),
+                          ),
+                        );
+
+                        if (result != null && mounted) {
+                          setState(() {
+                            billingDocType = result['doc_type'] ?? billingDocType;
+                            documentoCtrl.text = result['documento'] ?? documentoCtrl.text;
+                            complementoCtrl.text = result['complemento'] ?? complementoCtrl.text;
+                            razonSocialCtrl.text = result['razon_social'] ?? razonSocialCtrl.text;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Modificar Datos de Facturación'),
                     ),
-                  ] else ...[
-                    TextField(
-                      controller: documentoCtrl,
-                      decoration: const InputDecoration(labelText: 'Documento (NIT/CI)', border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: complementoCtrl,
-                      decoration: const InputDecoration(labelText: 'Complemento (opcional)', border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: razonSocialCtrl,
-                      decoration: const InputDecoration(labelText: 'Razón social', border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => setState(() => isEditingBilling = false),
-                          child: const Text('Listo'),
-                        ),
-                      ],
-                    )
-                  ],
+                  ),
                 ],
               ),
             ),

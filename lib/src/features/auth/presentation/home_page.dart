@@ -34,6 +34,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         api: api,
         displayName: user['name']?.toString(),
         initialBillingDocument: user['billing_document']?.toString(),
+        initialBillingDocType: user['billing_doc_type']?.toString(),
         initialBillingComplement: user['billing_complement']?.toString(),
         initialBillingRazonSocial: user['billing_razon_social']?.toString(),
       ),

@@ -42,12 +42,14 @@ class MobileApi {
     String? razonSocial,
     String? documento,
     String? complemento,
+    String? docType,
   }) async {
     final res = await _dio.post('/wallet/libelula/checkout', data: {
       'amount': amount,
       if (razonSocial != null) 'razon_social': razonSocial,
       if (documento != null) 'documento': documento,
       if (complemento != null) 'complemento': complemento,
+      if (docType != null) 'doc_type': docType,
     });
     return Map<String, dynamic>.from(res.data as Map);
   }
