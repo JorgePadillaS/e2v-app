@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,14 +20,52 @@ class _WalletPageState extends State<WalletPage> {
 
   Future<void> _openLibelula(double amount) async {
     final m = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
     try {
       final res = await widget.api.libelulaCheckout(amount);
       if (!mounted) return;
+
+      final txId = (res['transaction_id'] as num?)?.toInt();
       final url = res['payment_url']?.toString() ?? '';
       final qr = res['qr_image']?.toString() ?? '';
 
-      showDialog(
+      if (url.isNotEmpty) {
+        final uri = Uri.tryParse(url);
+        if (uri != null) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      }
+
+      final status = ValueNotifier<String>('PENDING');
+      Timer? timer;
+
+      Future<void> checkStatus() async {
+        if (txId == null) return;
+        try {
+          final s = await widget.api.libelulaStatus(txId);
+          final st = (s['status']?.toString() ?? 'PENDING').toUpperCase();
+          status.value = st;
+
+          if (st == 'COMPLETED') {
+            timer?.cancel();
+            if (!mounted) return;
+            navigator.maybePop();
+            await _reload();
+            m.showSnackBar(const SnackBar(content: Text('✅ Pago confirmado. Crédito aplicado.')));
+          } else if (st == 'FAILED') {
+            timer?.cancel();
+            if (!mounted) return;
+            m.showSnackBar(const SnackBar(content: Text('❌ Pago fallido o rechazado.')));
+          }
+        } catch (_) {}
+      }
+
+      timer = Timer.periodic(const Duration(seconds: 4), (_) => checkStatus());
+
+      if (!mounted) return;
+      await showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (_) => AlertDialog(
           title: Text('Pago Libélula BOB ${amount.toStringAsFixed(2)}'),
           content: SingleChildScrollView(
@@ -48,7 +88,22 @@ class _WalletPageState extends State<WalletPage> {
                   ),
                   const SizedBox(height: 10),
                 ],
-                const Text('Link pasarela (tarjetas / QR):'),
+                const Text('Estado del pago:'),
+                const SizedBox(height: 6),
+                ValueListenableBuilder<String>(
+                  valueListenable: status,
+                  builder: (_, st, __) => Row(
+                    children: [
+                      if (st == 'PENDING') ...[
+                        const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(st),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text('Puedes pagar con QR o tarjeta en la pasarela.'),
                 const SizedBox(height: 6),
                 SelectableText(url.isEmpty ? 'No llegó URL de pago' : url),
               ],
@@ -74,10 +129,20 @@ class _WalletPageState extends State<WalletPage> {
                 },
                 child: const Text('Abrir pago'),
               ),
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+            OutlinedButton(
+              onPressed: checkStatus,
+              child: const Text('Verificar ahora'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
           ],
         ),
       );
+
+      timer.cancel();
+      status.dispose();
     } catch (e) {
       if (!mounted) return;
       var msg = 'Error creando pago Libélula';

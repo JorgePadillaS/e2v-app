@@ -42,6 +42,11 @@ class MobileApi {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  Future<Map<String, dynamic>> libelulaStatus(int transactionId) async {
+    final res = await _dio.get('/wallet/libelula/status/$transactionId');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<Map<String, dynamic>> sessions() async {
     final res = await _dio.get('/sessions');
     return Map<String, dynamic>.from(res.data as Map);
