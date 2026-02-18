@@ -1,5 +1,7 @@
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key, required this.api});
@@ -20,12 +22,58 @@ class _WalletPageState extends State<WalletPage> {
       final res = await widget.api.libelulaCheckout(amount);
       if (!mounted) return;
       final url = res['payment_url']?.toString() ?? '';
+      final qr = res['qr_image']?.toString() ?? '';
+
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Pago Libélula creado'),
-          content: SelectableText(url.isEmpty ? 'No llegó URL de pago' : url),
+          title: Text('Pago Libélula BOB ${amount.toStringAsFixed(2)}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (qr.isNotEmpty) ...[
+                  const Text('QR de pago:'),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      qr,
+                      height: 220,
+                      width: 220,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Text('No se pudo cargar el QR.'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                const Text('Link pasarela (tarjetas / QR):'),
+                const SizedBox(height: 6),
+                SelectableText(url.isEmpty ? 'No llegó URL de pago' : url),
+              ],
+            ),
+          ),
           actions: [
+            if (url.isNotEmpty)
+              TextButton(
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  await Clipboard.setData(ClipboardData(text: url));
+                  messenger.showSnackBar(const SnackBar(content: Text('Link copiado')));
+                },
+                child: const Text('Copiar link'),
+              ),
+            if (url.isNotEmpty)
+              FilledButton(
+                onPressed: () async {
+                  final uri = Uri.tryParse(url);
+                  if (uri != null) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: const Text('Abrir pago'),
+              ),
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
           ],
         ),
