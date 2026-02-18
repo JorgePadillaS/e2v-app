@@ -47,6 +47,29 @@ class _WalletPageState extends State<WalletPage> {
     return double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0;
   }
 
+  Future<void> _confirmAndOpenLibelula() async {
+    final amount = _manualAmount();
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Primero indica un monto de recarga')));
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Confirmar recarga'),
+        content: Text('¿Deseas iniciar una recarga por Bs ${amount.toStringAsFixed(2)}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Continuar')),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+    await _openLibelula(amount);
+  }
+
   Future<void> _openLibelula(double amount) async {
     final m = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
@@ -290,14 +313,7 @@ class _WalletPageState extends State<WalletPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: FilledButton(
-                  onPressed: () async {
-                    final amount = _manualAmount();
-                    if (amount <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Monto inválido')));
-                      return;
-                    }
-                    await _openLibelula(amount);
-                  },
+                  onPressed: _confirmAndOpenLibelula,
                   child: const Text('Guardar'),
                 ),
               ),
