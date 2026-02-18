@@ -6,9 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:e2v_app/src/features/mobile/presentation/payment_webview_modal.dart';
 
 class WalletPage extends StatefulWidget {
-  const WalletPage({super.key, required this.api, this.displayName});
+  const WalletPage({
+    super.key,
+    required this.api,
+    this.displayName,
+    this.initialBillingDocument,
+    this.initialBillingComplement,
+    this.initialBillingRazonSocial,
+  });
   final MobileApi api;
   final String? displayName;
+  final String? initialBillingDocument;
+  final String? initialBillingComplement;
+  final String? initialBillingRazonSocial;
 
   @override
   State<WalletPage> createState() => _WalletPageState();
@@ -24,11 +34,17 @@ class _WalletPageState extends State<WalletPage> {
   final List<double> quickAmounts = const [10, 30, 60, 90, 150];
   double selectedAmount = 10;
   int? _lastCompletedTxId;
+  bool isEditingBilling = false;
 
   @override
   void initState() {
     super.initState();
-    razonSocialCtrl.text = widget.displayName ?? '';
+    razonSocialCtrl.text = widget.initialBillingRazonSocial?.isNotEmpty == true
+        ? widget.initialBillingRazonSocial!
+        : (widget.displayName ?? '');
+    documentoCtrl.text = widget.initialBillingDocument ?? '';
+    complementoCtrl.text = widget.initialBillingComplement ?? '';
+    isEditingBilling = documentoCtrl.text.isEmpty || razonSocialCtrl.text.isEmpty;
     _wallet = widget.api.wallet();
     _tx = widget.api.walletTransactions();
   }
@@ -243,23 +259,50 @@ class _WalletPageState extends State<WalletPage> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text('Datos para la Factura', style: TextStyle(fontSize: 20, color: Colors.grey)),
                   const SizedBox(height: 10),
-                  TextField(
-                    controller: documentoCtrl,
-                    decoration: const InputDecoration(labelText: 'Documento (NIT/CI)', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: complementoCtrl,
-                    decoration: const InputDecoration(labelText: 'Complemento (opcional)', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: razonSocialCtrl,
-                    decoration: const InputDecoration(labelText: 'Razón social', border: OutlineInputBorder()),
-                  ),
+                  if (!isEditingBilling) ...[
+                    Text('Documento: ${documentoCtrl.text.isEmpty ? '-' : documentoCtrl.text}', style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 6),
+                    Text('Complemento: ${complementoCtrl.text.isEmpty ? '-' : complementoCtrl.text}', style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 6),
+                    Text('Razón Social: ${razonSocialCtrl.text.isEmpty ? '-' : razonSocialCtrl.text}', style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => setState(() => isEditingBilling = true),
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Editar datos'),
+                      ),
+                    ),
+                  ] else ...[
+                    TextField(
+                      controller: documentoCtrl,
+                      decoration: const InputDecoration(labelText: 'Documento (NIT/CI)', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: complementoCtrl,
+                      decoration: const InputDecoration(labelText: 'Complemento (opcional)', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: razonSocialCtrl,
+                      decoration: const InputDecoration(labelText: 'Razón social', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => setState(() => isEditingBilling = false),
+                          child: const Text('Listo'),
+                        ),
+                      ],
+                    )
+                  ],
                 ],
               ),
             ),
@@ -340,7 +383,14 @@ class _WalletPageState extends State<WalletPage> {
                         color: isRecentPaid ? Colors.green.withValues(alpha: 0.18) : null,
                         child: ListTile(
                           title: Text('RECARGA ${_toDouble(it['amount']).toStringAsFixed(2)}'),
-                          subtitle: Text(it['created_at']?.toString().replaceAll('T', ' ').replaceAll('.000000Z', '') ?? ''),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(it['created_at']?.toString().replaceAll('T', ' ').replaceAll('.000000Z', '') ?? ''),
+                              if ((it['invoice_number'] ?? '').toString().isNotEmpty)
+                                Text('Factura: ${it['invoice_number']}'),
+                            ],
+                          ),
                           trailing: Chip(
                             label: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                             backgroundColor: color,
