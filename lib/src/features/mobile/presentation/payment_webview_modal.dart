@@ -126,13 +126,30 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     try {
       final raw = await _controller.runJavaScriptReturningResult('''
 (() => {
-  const candidates = Array.from(document.querySelectorAll('img'))
+  const imgs = Array.from(document.querySelectorAll('img'))
     .map(i => i.src)
     .filter(Boolean)
     .filter(src => src.startsWith('http') || src.startsWith('data:image/'));
-  if (candidates.length === 0) return '';
-  const preferred = candidates.find(s => s.toLowerCase().includes('qr')) || candidates[0];
-  return preferred;
+  const bestImg = imgs.find(s => s.toLowerCase().includes('qr')) || imgs[0];
+  if (bestImg) return bestImg;
+
+  const canvases = Array.from(document.querySelectorAll('canvas'));
+  if (canvases.length > 0) {
+    try {
+      return canvases[0].toDataURL('image/png');
+    } catch (_) {}
+  }
+
+  const bg = Array.from(document.querySelectorAll('*')).map(el => {
+    const style = window.getComputedStyle(el);
+    return style.backgroundImage || '';
+  }).find(v => v.includes('data:image/') || v.includes('http'));
+  if (bg) {
+    const m = bg.match(/url[(]["']?(.*?)["']?[)]/i);
+    if (m && m[1]) return m[1];
+  }
+
+  return '';
 })()
 ''');
       final src = raw.toString().replaceAll('"', '').replaceAll("'", '').trim();
@@ -265,8 +282,9 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
                           final clicked = await _triggerInPageDownload();
                           if (!context.mounted) return;
                           if (clicked) {
-                            showAppToast(context, 'Solicitud de descarga enviada', type: AppToastType.success);
-                            return;
+                            showAppToast(context, 'Generando descarga...', type: AppToastType.success);
+                            await Future.delayed(const Duration(milliseconds: 500));
+                            if (!context.mounted) return;
                           }
                           await _downloadQrFromDom();
                         },
