@@ -51,9 +51,12 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     try {
       if (Platform.isAndroid) {
         final storage = await Permission.storage.request();
+        final photos = await Permission.photos.request();
         if (!mounted) return;
-        if (!storage.isGranted && !storage.isLimited) {
-          showAppToast(context, 'Permiso de almacenamiento denegado', type: AppToastType.error);
+        final okStorage = storage.isGranted || storage.isLimited;
+        final okPhotos = photos.isGranted || photos.isLimited;
+        if (!okStorage && !okPhotos) {
+          showAppToast(context, 'Permiso de almacenamiento/galería denegado', type: AppToastType.error);
           setState(() => _downloading = false);
           return;
         }
@@ -80,6 +83,11 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
         await downloadDir.create(recursive: true);
       }
       final savePath = '${downloadDir.path}/$fileName';
+      final picsDir = Directory('/storage/emulated/0/Pictures');
+      if (!await picsDir.exists()) {
+        await picsDir.create(recursive: true);
+      }
+      final savePathPictures = '${picsDir.path}/$fileName';
 
       await Dio().download(
         url,
@@ -91,9 +99,12 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
           responseType: ResponseType.bytes,
         ),
       );
+      try {
+        await File(savePath).copy(savePathPictures);
+      } catch (_) {}
 
       if (!mounted) return;
-      showAppToast(context, 'Descarga completada: $fileName', type: AppToastType.success);
+      showAppToast(context, 'Descargado: $fileName (Descargas/Pictures)', type: AppToastType.success);
     } catch (e) {
       if (!mounted) return;
       showAppToast(context, 'No se pudo descargar: $e', type: AppToastType.error);
@@ -157,9 +168,15 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
           final downloadDir = Directory('/storage/emulated/0/Download');
           if (!await downloadDir.exists()) await downloadDir.create(recursive: true);
           final out = File('${downloadDir.path}/$fileName');
-          await out.writeAsBytes(base64Decode(b64));
+          final bytes = base64Decode(b64);
+          await out.writeAsBytes(bytes);
+          try {
+            final picsDir = Directory('/storage/emulated/0/Pictures');
+            if (!await picsDir.exists()) await picsDir.create(recursive: true);
+            await out.copy('${picsDir.path}/$fileName');
+          } catch (_) {}
           if (!mounted) return;
-          showAppToast(context, 'Descarga completada: $fileName', type: AppToastType.success);
+          showAppToast(context, 'Descargado: $fileName (Descargas/Pictures)', type: AppToastType.success);
         } finally {
           if (mounted) setState(() => _downloading = false);
         }
