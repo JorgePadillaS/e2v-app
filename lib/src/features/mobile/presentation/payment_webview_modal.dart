@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewModal extends StatefulWidget {
@@ -42,6 +43,17 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     } catch (_) {}
     final ts = DateTime.now().millisecondsSinceEpoch;
     return 'descarga_$ts.$fallbackExt';
+  }
+
+  Future<void> _notifyAndOpen(String path, String fileName) async {
+    if (!mounted) return;
+    showAppToast(context, 'Descargado: $fileName', type: AppToastType.success);
+    try {
+      await OpenFilex.open(path);
+    } catch (_) {
+      if (!mounted) return;
+      showAppToast(context, 'Archivo guardado en Descargas/Pictures', type: AppToastType.warning);
+    }
   }
 
   Future<void> _downloadToDownloads(String url) async {
@@ -103,8 +115,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
         await File(savePath).copy(savePathPictures);
       } catch (_) {}
 
-      if (!mounted) return;
-      showAppToast(context, 'Descargado: $fileName (Descargas/Pictures)', type: AppToastType.success);
+      await _notifyAndOpen(savePathPictures, fileName);
     } catch (e) {
       if (!mounted) return;
       showAppToast(context, 'No se pudo descargar: $e', type: AppToastType.error);
@@ -170,13 +181,15 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
           final out = File('${downloadDir.path}/$fileName');
           final bytes = base64Decode(b64);
           await out.writeAsBytes(bytes);
+          String openPath = out.path;
           try {
             final picsDir = Directory('/storage/emulated/0/Pictures');
             if (!await picsDir.exists()) await picsDir.create(recursive: true);
-            await out.copy('${picsDir.path}/$fileName');
+            final picPath = '${picsDir.path}/$fileName';
+            await out.copy(picPath);
+            openPath = picPath;
           } catch (_) {}
-          if (!mounted) return;
-          showAppToast(context, 'Descargado: $fileName (Descargas/Pictures)', type: AppToastType.success);
+          await _notifyAndOpen(openPath, fileName);
         } finally {
           if (mounted) setState(() => _downloading = false);
         }
