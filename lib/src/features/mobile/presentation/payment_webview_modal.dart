@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewModal extends StatefulWidget {
@@ -101,14 +101,98 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     }
   }
 
+  Future<void> _downloadQrFromDom() async {
+    try {
+      final raw = await _controller.runJavaScriptReturningResult('''
+(() => {
+  const candidates = Array.from(document.querySelectorAll('img'))
+    .map(i => i.src)
+    .filter(Boolean)
+    .filter(src => src.startsWith('http') || src.startsWith('data:image/'));
+  if (candidates.length === 0) return '';
+  const preferred = candidates.find(s => s.toLowerCase().includes('qr')) || candidates[0];
+  return preferred;
+})()
+''');
+      final src = raw.toString().replaceAll('"', '').replaceAll("'", '').trim();
+      if (src.isEmpty) {
+        if (!mounted) return;
+        showAppToast(context, 'No se encontró imagen QR para descargar', type: AppToastType.warning);
+        return;
+      }
+
+      if (src.startsWith('http')) {
+        await _downloadToDownloads(src);
+        return;
+      }
+
+      if (src.startsWith('data:image/')) {
+        if (_downloading) return;
+        setState(() => _downloading = true);
+        try {
+          final metaAndData = src.split(',');
+          if (metaAndData.length < 2) throw Exception('data URL inválida');
+          final meta = metaAndData.first;
+          final b64 = metaAndData.sublist(1).join(',');
+          final ext = meta.contains('png') ? 'png' : (meta.contains('jpeg') || meta.contains('jpg')) ? 'jpg' : 'img';
+          final fileName = 'qr_${DateTime.now().millisecondsSinceEpoch}.$ext';
+          final downloadDir = Directory('/storage/emulated/0/Download');
+          if (!await downloadDir.exists()) await downloadDir.create(recursive: true);
+          final out = File('${downloadDir.path}/$fileName');
+          await out.writeAsBytes(base64Decode(b64));
+          if (!mounted) return;
+          showAppToast(context, 'Descarga completada: $fileName', type: AppToastType.success);
+        } finally {
+          if (mounted) setState(() => _downloading = false);
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      showAppToast(context, 'No se pudo descargar QR: $e', type: AppToastType.error);
+    }
+  }
+
+  Future<void> _installDownloadHook() async {
+    try {
+      await _controller.runJavaScript('''
+(() => {
+  if (window.__e2vDownloadHookInstalled) return;
+  window.__e2vDownloadHookInstalled = true;
+
+  document.addEventListener('click', function(ev) {
+    const target = ev.target;
+    if (!target) return;
+    const el = target.closest('a,button,input[type="button"],input[type="submit"]');
+    if (!el) return;
+    const txt = (el.innerText || el.textContent || el.value || '').toLowerCase();
+    if (txt.includes('descargar qr') || txt.includes('descargar')) {
+      if (window.E2VDownloadChannel && window.E2VDownloadChannel.postMessage) {
+        window.E2VDownloadChannel.postMessage('download_click');
+      }
+    }
+  }, true);
+})();
+''');
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'E2VDownloadChannel',
+        onMessageReceived: (msg) {
+          if (msg.message == 'download_click') {
+            _downloadQrFromDom();
+          }
+        },
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (p) => setState(() => progress = p),
+          onPageFinished: (_) => _installDownloadHook(),
           onNavigationRequest: (request) {
             if (_looksLikeDownload(request.url)) {
               _downloadToDownloads(request.url);
@@ -138,16 +222,6 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
                     child: Text(widget.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                   ),
                   IconButton(
-                    tooltip: 'Abrir externo (fallback)',
-                    onPressed: () async {
-                      final uri = Uri.tryParse(widget.url);
-                      if (uri != null) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    icon: const Icon(Icons.open_in_new),
-                  ),
-                  IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                   ),
@@ -164,7 +238,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
                       ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.download_for_offline_outlined),
                   label: Text(_downloading ? 'Descargando...' : 'Descargar en Descargas'),
-                  onPressed: _downloading ? null : () => _downloadToDownloads(widget.url),
+                  onPressed: _downloading ? null : _downloadQrFromDom,
                 ),
               ),
             ),
