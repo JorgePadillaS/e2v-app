@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewModal extends StatefulWidget {
@@ -83,25 +83,39 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     );
   }
 
+  MimeType _mimeFromExtension(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'pdf':
+        return MimeType.pdf;
+      case 'png':
+        return MimeType.png;
+      case 'jpg':
+      case 'jpeg':
+        return MimeType.jpeg;
+      default:
+        return MimeType.other;
+    }
+  }
+
+  Future<void> _saveBytes(Uint8List bytes, String fileName, String ext) async {
+    final sanitized = fileName.replaceAll(RegExp(r'[\/:*?"<>|]'), '_');
+    final dotIndex = sanitized.lastIndexOf('.');
+    final baseName = dotIndex > 0 ? sanitized.substring(0, dotIndex) : sanitized;
+    final name = baseName.isEmpty ? 'archivo_${DateTime.now().millisecondsSinceEpoch}' : baseName;
+    await FileSaver.instance.saveFile(
+      name: name,
+      bytes: bytes,
+      ext: ext,
+      mimeType: _mimeFromExtension(ext),
+    );
+  }
+
   Future<void> _downloadToDownloads(String url) async {
     if (_downloading) return;
     setState(() => _downloading = true);
     await _showDownloadingDialog();
 
     try {
-      if (Platform.isAndroid) {
-        final storage = await Permission.storage.request();
-        final photos = await Permission.photos.request();
-        if (!mounted) return;
-        final okStorage = storage.isGranted || storage.isLimited;
-        final okPhotos = photos.isGranted || photos.isLimited;
-        if (!okStorage && !okPhotos) {
-          showAppToast(context, 'Permiso de almacenamiento/galería denegado', type: AppToastType.error);
-          setState(() => _downloading = false);
-          return;
-        }
-      }
-
       String cookieHeader = '';
       try {
         final cookieJs = await _controller.runJavaScriptReturningResult('document.cookie');
@@ -118,35 +132,28 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
                       ? 'jpg'
                       : 'bin';
       final fileName = await _fileNameFromUrl(url, fallbackExt: ext);
-      final downloadDir = Directory('/storage/emulated/0/Download');
-      if (!await downloadDir.exists()) {
-        await downloadDir.create(recursive: true);
-      }
-      final savePath = '${downloadDir.path}/$fileName';
-      final picsDir = Directory('/storage/emulated/0/Pictures');
-      if (!await picsDir.exists()) {
-        await picsDir.create(recursive: true);
-      }
-      final savePathPictures = '${picsDir.path}/$fileName';
 
-      await Dio(
+      final response = await Dio(
         BaseOptions(
           connectTimeout: const Duration(seconds: 8),
           receiveTimeout: const Duration(seconds: 12),
         ),
-      ).download(
+      ).get<List<int>>(
         url,
-        savePath,
         options: Options(
+          responseType: ResponseType.bytes,
           followRedirects: true,
           validateStatus: (s) => s != null && s < 500,
           headers: cookieHeader.isNotEmpty ? {'Cookie': cookieHeader} : null,
-          responseType: ResponseType.bytes,
         ),
       );
-      try {
-        await File(savePath).copy(savePathPictures);
-      } catch (_) {}
+
+      final bytes = response.data;
+      if (bytes == null) {
+        throw Exception('Respuesta vacía');
+      }
+
+      await _saveBytes(Uint8List.fromList(bytes), fileName, ext);
 
       _hideDownloadingDialog();
       await _showDownloadedDialog(fileName);
@@ -221,23 +228,15 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
           final b64 = metaAndData.sublist(1).join(',');
           final ext = meta.contains('png') ? 'png' : (meta.contains('jpeg') || meta.contains('jpg')) ? 'jpg' : 'img';
           final fileName = 'qr_${DateTime.now().millisecondsSinceEpoch}.$ext';
-          final downloadDir = Directory('/storage/emulated/0/Download');
-          if (!await downloadDir.exists()) await downloadDir.create(recursive: true);
-          final out = File('${downloadDir.path}/$fileName');
-          final bytes = base64Decode(b64);
-          await out.writeAsBytes(bytes);
-          try {
-            final picsDir = Directory('/storage/emulated/0/Pictures');
-            if (!await picsDir.exists()) await picsDir.create(recursive: true);
-            final picPath = '${picsDir.path}/$fileName';
-            await out.copy(picPath);
-          } catch (_) {}
+          final bytes = Uint8List.fromList(base64Decode(b64));
+          await _saveBytes(bytes, fileName, ext);
           _hideDownloadingDialog();
           await _showDownloadedDialog(fileName);
         } finally {
           _hideDownloadingDialog();
           if (mounted) setState(() => _downloading = false);
         }
+        return;
       }
     } catch (e) {
       _hideDownloadingDialog();
