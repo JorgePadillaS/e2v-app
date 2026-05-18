@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "318186059918",
+    "project_id": "electropoint-8c3d1",
+    "storage_bucket": "electropoint-8c3d1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:318186059918:android:a7f67a6333c810c5b931df",
+        "android_client_info": {
+          "package_name": "bo.e2v.electropoint"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "318186059918-abno72u58ivmhq902e67pnofoj0dic59.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "bo.e2v.electropoint",
+            "certificate_hash": "2d6f7058acf655a04a055f95867855eb34d43d68"
+          }
+        },
+        {
+          "client_id": "318186059918-meuob9r6b9qinerc2liqh0vr14tr3rb6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "bo.e2v.electropoint",
+            "certificate_hash": "ae8b09d5b2d5d67c93d6e75d6d9223242752d8f4"
+          }
+        },
+        {
+          "client_id": "318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvxl7qstnVwvt2IU1G6s-Nz4URhwhx410"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "318186059918-tef03r3jbh5f4bk4vbboi6c97pi4vt34.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "bo.e2v.electropoint",
+                "app_store_id": "6769938013"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

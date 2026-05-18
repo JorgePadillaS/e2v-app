@@ -1,0 +1,81 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+lib/generated_plugin_registrant.dart
+
+# iOS
+/ios/Flutter/Flutter.podspec
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/app.flx
+/ios/Flutter/app.zip
+/ios/Flutter/flutter_assets/
+/ios/Flutter/flutter_export_environment.sh
+/ios/Pods/
+/ios/.symlinks/
+/ios/Runner/GeneratedPluginRegistrant.*
+
+# Android
+/android/.gradle
+/android/build/
+# /android/local.properties
+/android/app/src/main/gen/
+**/android/app/build/
+**/android/captures/
+**/android/app/app.iml
+
+# macOS
+/macos/Flutter/GeneratedPluginRegistrant.swift
+/macos/Flutter/ephemeral/
+/macos/Pods/
+
+# Windows
+/windows/flutter/ephemeral/
+
+# Linux
+/linux/flutter/ephemeral/
+
+# Symbolication related
+app.*.symbols
+app.*.map.json
+
+# Environment variables
+.env
+.env*
+
+# Keystore files (Android)
+# *.jks
+# *.keystore
+# key.properties
+
+# Firebase configuration files (Opcional: puedes descomentarlos si prefieres no subirlos al repo)
+# android/app/google-services.json
+# ios/Runner/GoogleService-Info.plist
+# macos/Runner/GoogleService-Info.plist

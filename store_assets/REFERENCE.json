@@ -1,0 +1,37 @@
+{
+  "app_name": "E2v App",
+  "bundle_id": "bo.e2v.electropoint",
+  "google_play": {
+    "icon_512": "icon_512.png (obligatorio)",
+    "feature_graphic_1024x500": "feature_graphic_1024x500.jpg (obligatorio, m\u00e1x 1MB)",
+    "screenshots_1080x1920": "Al menos 2, m\u00e1x 8 (5-8 recomendado)",
+    "promo_graphic_480x320": "promo_graphic_480x320.jpg (opcional)",
+    "tv_banner": "tv_banner_1280x720.jpg (si es app de TV)"
+  },
+  "app_store": {
+    "icon_1024": "icon_1024.png (obligatorio, sin esquinas redondeadas)",
+    "screenshots": {
+      "iphone_67_1242x2688": "1-5 screenshots (obligatorio)",
+      "iphone_61_1170x2532": "1-5 screenshots (obligatorio)",
+      "iphone_55_1080x1920": "1-5 screenshots (opcional)",
+      "ipad_129_2048x2732": "1-5 screenshots (opcional)",
+      "ipad_11_1668x2388": "1-5 screenshots (opcional)"
+    }
+  },
+  "notes": {
+    "google_play": [
+      "Todos los gr\u00e1ficos en formato PNG o JPG",
+      "Icono: 512x512, sin esquinas redondeadas (Google aplica)",
+      "Feature graphic: sin texto o textos simples",
+      "Screenshots: m\u00e1ximo 8, recomendado 5+",
+      "Dimensiones exactas requeridas"
+    ],
+    "app_store": [
+      "Icono de app: 1024x1024 sin esquinas redondeadas",
+      "Screenshots: al menos 1 por dispositivo",
+      "Formato: JPEG o PNG",
+      "Texto sobre screenshots es recomendado para mostrar features",
+      "iPad screenshots son opcionales pero mejoran conversi\u00f3n"
+    ]
+  }
+}
