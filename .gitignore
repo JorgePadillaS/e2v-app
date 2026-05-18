@@ -45,7 +45,7 @@ lib/generated_plugin_registrant.dart
 # Android
 /android/.gradle
 /android/build/
-# /android/local.properties
+# /android/local.properties 
 /android/app/src/main/gen/
 **/android/app/build/
 **/android/captures/
