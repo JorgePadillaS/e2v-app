@@ -25,7 +25,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
   double? _userBalance;
   bool _loadingBalance = true;
   final double _minSafeBalance = 15.0;
-  bool _isPerformingAction = false;
+  bool _isPerformingAction = false, _isIOS = false;
   String _loadingMessage = 'Procesando...';
 
   @override
@@ -121,6 +121,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
   @override
   Widget build(BuildContext context) {
     final activeSessionAsync = ref.watch(activeSessionProvider);
+    _isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     // Refresh balance when session state changes (e.g. session finished)
     ref.listen(activeSessionProvider, (prev, next) {
@@ -526,7 +527,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
             child: const Icon(Icons.qr_code_scanner_rounded, size: 100, color: Colors.blue),
           ),
         ),
-        const SizedBox(height: 48),
+        SizedBox(height: _isIOS ? 12 : 48),
         const Text(
           '¿Listo para cargar?',
           textAlign: TextAlign.center,
@@ -538,7 +539,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 16, color: Colors.blueGrey, height: 1.4),
         ),
-        const SizedBox(height: 60),
+        SizedBox(height: _isIOS ? 30 : 60),
         SizedBox(
           width: double.infinity,
           height: 64,
