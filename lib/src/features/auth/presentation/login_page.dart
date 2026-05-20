@@ -109,6 +109,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final loading = authState.isLoading;
     final backendError = authState.hasError ? authState.error.toString() : null;
     final branding = ref.watch(brandingProvider).value;
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     return Scaffold(
       body: Container(
@@ -396,49 +397,51 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 56,
-                        child: OutlinedButton(
-                          onPressed:
-                              loading
-                                  ? null
-                                  : () =>
-                                      ref
-                                          .read(authControllerProvider.notifier)
-                                          .loginWithGoogle(),
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                      if (!isIOS) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 56,
+                          child: OutlinedButton(
+                            onPressed:
+                                loading
+                                    ? null
+                                    : () =>
+                                        ref
+                                            .read(authControllerProvider.notifier)
+                                            .loginWithGoogle(),
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              side: BorderSide(color: Colors.grey.shade300),
                             ),
-                            side: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.network(
-                                'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
-                                height: 24,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(
-                                    LucideIcons.chrome,
-                                    size: 24,
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Continuar con Google',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.network(
+                                  'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
+                                  height: 24,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      LucideIcons.chrome,
+                                      size: 24,
+                                    );
+                                  },
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Continuar con Google',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 24),
                       TextButton(
                         onPressed:

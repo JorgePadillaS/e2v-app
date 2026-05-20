@@ -46,9 +46,9 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location when open to show your current position on the map.</string>
+	<string>Usamos la ubicación para mostrar la ruta a seguir para llegar a la estación de carga más cercana.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs access to location when in the background.</string>
+	<string>Hay momentos en la que la aplicación se pone en segundo plano para acceder a la plataforma de pago y necesitamos que siga buscando la estación más cercana.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to scan QR codes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -337,7 +337,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
                           ? 0
                           : (_isCardExpanded
                               ? MediaQuery.of(context).size.height * 0.75
-                              : 260),
+                              : (290.0 * (MediaQuery.maybeTextScalerOf(context)?.scale(1) ?? 1.0)).clamp(290.0, 360.0)),
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: listLocations.length,

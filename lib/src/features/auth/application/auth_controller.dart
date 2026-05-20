@@ -98,6 +98,13 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   }
 
   Future<void> loginWithGoogle() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      state = AsyncValue.error(
+        'El inicio de sesión con Google no está disponible en iOS.',
+        StackTrace.current,
+      );
+      return;
+    }
     state = const AsyncValue.loading();
     try {
       debugPrint('🔵 GoogleSignIn: Iniciando flujo de login...');

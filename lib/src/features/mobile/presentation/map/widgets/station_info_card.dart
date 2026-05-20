@@ -76,12 +76,14 @@ class _StationInfoCardState extends State<StationInfoCard> {
               colors: [Colors.white, Colors.grey.shade50],
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // Panel Handle
                 if (_isExpanded)
                   Center(
@@ -184,7 +186,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                 if (_isExpanded)
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.4,
+                      maxHeight: (MediaQuery.of(context).size.height * 0.75 - 300).clamp(120.0, 400.0),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 16.0),
@@ -226,12 +228,16 @@ class _StationInfoCardState extends State<StationInfoCard> {
                                       color: Colors.amber,
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      sName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                        color: Color(0xFF333333),
+                                    Expanded(
+                                      child: Text(
+                                        sName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: Color(0xFF333333),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -314,7 +320,8 @@ class _StationInfoCardState extends State<StationInfoCard> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildToggleButton(int count) {
@@ -336,35 +343,35 @@ class _StationInfoCardState extends State<StationInfoCard> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    LucideIcons.layers,
-                    size: 18,
+              Icon(
+                LucideIcons.layers,
+                size: 18,
+                color:
+                    _isExpanded
+                        ? const Color(0xFF0076D6)
+                        : Colors.grey[600],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _isExpanded
+                      ? 'OCULTAR DISPENSADORES'
+                      : 'VER DISPENSADORES ($count)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    letterSpacing: 0.8,
                     color:
                         _isExpanded
                             ? const Color(0xFF0076D6)
-                            : Colors.grey[600],
+                            : const Color(0xFF444444),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _isExpanded
-                        ? 'OCULTAR DISPENSADORES'
-                        : 'VER DISPENSADORES ($count)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      letterSpacing: 0.8,
-                      color:
-                          _isExpanded
-                              ? const Color(0xFF0076D6)
-                              : const Color(0xFF444444),
-                    ),
-                  ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 8),
               Icon(
                 _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
                 size: 20,
@@ -390,12 +397,16 @@ class _StationInfoCardState extends State<StationInfoCard> {
         children: [
           Icon(LucideIcons.zap, size: 12, color: color),
           const SizedBox(width: 6),
-          Text(
-            type,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
+          Flexible(
+            child: Text(
+              type,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
           ),
         ],
