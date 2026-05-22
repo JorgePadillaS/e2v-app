@@ -102,7 +102,7 @@ class _StartingSessionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessionId = session['id'];
+    //final sessionId = session['id'];
 
     return Card(
       elevation: 4,
@@ -311,6 +311,7 @@ class _ActiveSessionCard extends ConsumerWidget {
               if (api != null) {
                 api.stopStation(session['station_id']).then((_) {
                   ref.read(activeSessionProvider.notifier).refresh();
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Orden de parada enviada.')));
                 });
               }
@@ -335,7 +336,7 @@ class _HistorySessionCard extends StatelessWidget {
     final energy = session['total_energy_kwh'] ?? 0.0;
     final cost = session['total_cost'] ?? 0.0;
 
-    String _fmt(DateTime? d) => d == null ? '-' : '${d.day}/${d.month} ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+    String fmt(DateTime? d) => d == null ? '-' : '${d.day}/${d.month} ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -348,8 +349,8 @@ class _HistorySessionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('Inicio: ${_fmt(start)}'),
-            Text('Fin: ${_fmt(end)}'),
+            Text('Inicio: ${fmt(start)}'),
+            Text('Fin: ${fmt(end)}'),
             Text('Energía: $energy kWh · Costo: Bs $cost'),
           ],
         ),

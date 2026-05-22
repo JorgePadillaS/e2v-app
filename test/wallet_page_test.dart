@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:e2v_app/src/features/mobile/presentation/wallet_page.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
 
 class MockMobileApi extends Mock implements MobileApi {
   @override
