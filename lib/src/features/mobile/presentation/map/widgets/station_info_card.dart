@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:e2v_app/src/features/mobile/application/map_service.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class StationInfoCard extends StatefulWidget {
   const StationInfoCard({
@@ -103,7 +103,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0076D6).withOpacity(0.1),
+                        color: const Color(0xFF0076D6).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -211,7 +211,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                               border: Border.all(color: Colors.grey.shade200),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.03),
+                                  color: Colors.black.withValues(alpha: 0.03),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -302,7 +302,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      shadowColor: const Color(0xFF0076D6).withOpacity(0.4),
+                      shadowColor: const Color(0xFF0076D6).withValues(alpha: 0.4),
                     ),
                     icon: const Icon(LucideIcons.navigation, size: 18),
                     label: const Text(
@@ -328,7 +328,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
     return Material(
       color:
           _isExpanded
-              ? const Color(0xFF0076D6).withOpacity(0.05)
+              ? const Color(0xFF0076D6).withValues(alpha: 0.05)
               : Colors.grey.shade100,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
@@ -388,9 +388,9 @@ class _StationInfoCardState extends State<StationInfoCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

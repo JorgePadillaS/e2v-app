@@ -12,11 +12,11 @@ import 'package:e2v_app/src/features/mobile/application/notification_notifier.da
 import 'package:e2v_app/src/features/mobile/presentation/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:e2v_app/src/core/config/branding_provider.dart';
 import 'package:dio/dio.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, required this.data});
@@ -518,7 +518,7 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
                 ],
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
-                  value: _docType,
+                  initialValue: _docType,
                   decoration: const InputDecoration(labelText: 'Tipo de Documento', border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: 'NIT', child: Text('NIT')),

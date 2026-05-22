@@ -1,9 +1,9 @@
 import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:e2v_app/src/core/config/branding_provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {

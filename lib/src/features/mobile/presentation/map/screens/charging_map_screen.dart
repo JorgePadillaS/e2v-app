@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:e2v_app/src/features/mobile/application/stations_notifier.dart';
 import 'package:e2v_app/src/features/mobile/presentation/map/widgets/station_info_card.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ChargingMapScreen extends ConsumerStatefulWidget {
   const ChargingMapScreen({super.key, required this.api});

@@ -3,7 +3,7 @@ import 'package:e2v_app/src/core/config/branding_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -143,7 +143,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               },
               child: Card(
                 elevation: 16,
-                shadowColor: Colors.black.withOpacity(0.4),
+                shadowColor: Colors.black.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
@@ -422,9 +422,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
                                   height: 24,
                                   errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(
-                                      LucideIcons.chrome,
+                                    return Icon(
+                                      Icons.language,
                                       size: 24,
+                                      color: Colors.grey.shade600,
                                     );
                                   },
                                 ),
@@ -535,7 +536,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     required void Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: onChanged,
       decoration: InputDecoration(

@@ -1,5 +1,5 @@
 # Define a global platform to match plugin requirements
-platform :ios, '15.5'
+platform :ios, '16.5'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

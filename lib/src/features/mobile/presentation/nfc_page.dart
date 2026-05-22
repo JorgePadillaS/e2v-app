@@ -159,7 +159,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
 
   Widget _buildActionOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.6),
+      color: Colors.black.withValues(alpha: 0.6),
       width: double.infinity,
       height: double.infinity,
       child: Center(
@@ -171,7 +171,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -230,7 +230,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
         const SizedBox(height: 24),
         Card(
           elevation: 12,
-          shadowColor: Colors.green.withOpacity(0.3),
+          shadowColor: Colors.green.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
             side: BorderSide(color: Colors.green.shade200, width: 1.5),
@@ -241,7 +241,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Colors.white, Colors.green.shade50.withOpacity(0.3)],
+                colors: [Colors.white, Colors.green.shade50.withValues(alpha: 0.3)],
               ),
             ),
             padding: const EdgeInsets.all(24),
@@ -253,7 +253,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.bolt, color: Colors.green, size: 32),
@@ -320,7 +320,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.05),
+            color: Colors.blue.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Row(
@@ -364,7 +364,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
                   child: CircularProgressIndicator(
                     strokeWidth: 8,
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
-                    backgroundColor: Colors.blue.withOpacity(0.1),
+                    backgroundColor: Colors.blue.withValues(alpha: 0.1),
                   ),
                 ),
                 const Icon(Icons.bolt, size: 64, color: Colors.blue),
@@ -467,7 +467,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color: Colors.orange.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.account_balance_wallet_outlined, size: 80, color: Colors.orange),
@@ -520,9 +520,9 @@ class _NfcPageState extends ConsumerState<NfcPage> {
           child: Container(
             padding: const EdgeInsets.all(48),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.08), 
+              color: Colors.blue.withValues(alpha: 0.08), 
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.blue.withOpacity(0.1), width: 2),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.1), width: 2),
             ),
             child: const Icon(Icons.qr_code_scanner_rounded, size: 100, color: Colors.blue),
           ),

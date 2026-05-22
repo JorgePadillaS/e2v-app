@@ -39,9 +39,9 @@ class E2VApp extends ConsumerWidget {
       theme: FlexThemeData.light(
         colors: FlexSchemeColor(
           primary: theme.primaryColor,
-          primaryContainer: theme.primaryColor.withOpacity(0.2),
+          primaryContainer: theme.primaryColor.withValues(alpha: 0.2),
           secondary: theme.secondaryColor,
-          secondaryContainer: theme.secondaryColor.withOpacity(0.2),
+          secondaryContainer: theme.secondaryColor.withValues(alpha: 0.2),
           tertiary: const Color(0xFF2E7D32),
           tertiaryContainer: const Color(0xFFC8E6C9),
           appBarColor: theme.primaryColor,
@@ -70,9 +70,9 @@ class E2VApp extends ConsumerWidget {
       darkTheme: FlexThemeData.dark(
         colors: FlexSchemeColor(
           primary: theme.primaryColor,
-          primaryContainer: theme.primaryColor.withOpacity(0.2),
+          primaryContainer: theme.primaryColor.withValues(alpha: 0.2),
           secondary: theme.secondaryColor,
-          secondaryContainer: theme.secondaryColor.withOpacity(0.2),
+          secondaryContainer: theme.secondaryColor.withValues(alpha: 0.2),
           tertiary: const Color(0xFF81C784),
           tertiaryContainer: const Color(0xFF1B5E20),
         ),
@@ -90,7 +90,7 @@ class E2VApp extends ConsumerWidget {
           margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.white.withOpacity(0.1), width: 1.0),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1.0),
           ),
         ),
       ),
