@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:e2v_app/src/features/auth/data/auth_api.dart';
 import 'package:e2v_app/src/features/auth/data/token_store.dart';
-import 'package:e2v_app/src/core/config/app_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -98,107 +97,34 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   }
 
   Future<void> loginWithGoogle() async {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      state = AsyncValue.error(
-        'El inicio de sesión con Google no está disponible en iOS.',
-        StackTrace.current,
-      );
-      return;
-    }
     state = const AsyncValue.loading();
     try {
-      debugPrint('🔵 GoogleSignIn: Iniciando flujo de login...');
-      
-      // Inicializar GoogleSignIn con scopes necesarios
-      // serverClientId es necesario para obtener idToken
-      final googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile', 'openid'],
-        serverClientId: '318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com',
-      );
+      final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
 
-      debugPrint('🔵 GoogleSignIn: Intentando hacer signIn()...');
       final account = await googleSignIn.signIn();
-
       if (account == null) {
-        debugPrint('🟡 GoogleSignIn: Usuario canceló el login (account == null)');
         state = const AsyncValue.data(null);
         return;
       }
 
-      debugPrint('🟢 GoogleSignIn: Cuenta obtenida: ${account.email}');
-
-      // Obtener tokens de autenticación
-      debugPrint('🔵 GoogleSignIn: Obteniendo tokens de autenticación...');
       final auth = await account.authentication;
-
-      debugPrint('🔵 GoogleSignIn: Información de autenticación:');
-      debugPrint('  - accessToken presente: ${auth.accessToken != null}');
-      debugPrint('  - idToken presente: ${auth.idToken != null}');
-
       final idToken = auth.idToken;
 
       if (idToken == null) {
-        debugPrint('🔴 ERROR: idToken es null');
-        debugPrint('   Posibles causas:');
-        debugPrint('   1. oauth_client vacío en google-services.json');
-        debugPrint('   2. SHA-1 del certificado no coincide');
-        debugPrint('   3. GoogleService-Info.plist falta en iOS');
         state = AsyncValue.error(
-          'No se pudo obtener el token de Google. Verifica la configuración de Firebase:\n'
-          '- Android: Revisa que oauth_client no esté vacío en google-services.json\n'
-          '- iOS: Asegúrate de que GoogleService-Info.plist existe',
+          'No se pudo obtener el token de Google',
           StackTrace.current,
         );
         return;
       }
-
-      debugPrint('🟢 GoogleSignIn: idToken obtenido exitosamente (primeros 20 chars: ${idToken.substring(0, 20)}...)');
-
-      // Enviar token al backend
-      debugPrint('🔵 GoogleSignIn: Enviando token al backend...');
-      debugPrint('   Enviando a: ${AppConfig.apiBaseUrl}google-login');
-      debugPrint('   ID Token (primeros 50 chars): ${idToken.substring(0, 50)}...');
 
       final res = await ref.read(authApiProvider).loginWithGoogle(idToken);
-
-      debugPrint('🔵 GoogleSignIn: Respuesta del backend recibida');
-      debugPrint('   Status: OK');
-      debugPrint('   Keys en respuesta: ${res.keys}');
-
-      if (!res.containsKey('token')) {
-        debugPrint('🔴 ERROR: La respuesta no contiene "token"');
-        debugPrint('   Respuesta completa: $res');
-        state = AsyncValue.error(
-          'Backend no retornó token. Respuesta: ${res.toString()}',
-          StackTrace.current,
-        );
-        return;
-      }
-
       final token = res['token'] as String;
-      debugPrint('🟢 Token recibido: ${token.substring(0, 20)}...');
-
       await ref.read(tokenStoreProvider).save(token);
-
-      debugPrint('🔵 Obteniendo perfil...');
       final profile = await ref.read(authApiProvider).profile(token);
-      debugPrint('🟢 GoogleSignIn: Login exitoso. Usuario: ${profile['email']}');
       state = AsyncValue.data({'token': token, ...profile});
     } catch (e, st) {
-      debugPrint('🔴 ERROR GoogleSignIn: $e');
-      debugPrintStack(stackTrace: st);
-
-      // Proporcionar mensajes de error más descriptivos
-      String errorMsg = _parseError(e);
-      if (e.toString().contains('12501')) {
-        errorMsg = 'Cancelaste la autenticación con Google';
-      } else if (e.toString().contains('10')) {
-        errorMsg = 'Configuración de Google Sign-In incorrecta.\n'
-                  'Verifica que:\n'
-                  '- SHA-1 (Android) esté registrado en Firebase\n'
-                  '- GoogleService-Info.plist (iOS) sea válido';
-      }
-      state = AsyncValue.error(errorMsg, st);
+      state = AsyncValue.error(_parseError(e), st);
     }
   }
 
@@ -261,6 +187,50 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
       // Rollback to previous state on error to avoid being stuck in loading
       state = AsyncValue.data(current);
       rethrow;
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    final current = state.value;
+    if (current == null) return;
+
+    final token = current['token'] as String;
+    state = const AsyncValue.loading();
+
+    try {
+      await ref.read(authApiProvider).deleteAccount(token);
+      await ref.read(tokenStoreProvider).clear();
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(_parseError(e), st);
+      state = AsyncValue.data(current);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> sendResetPin(String email) async {
+    try {
+      return await ref.read(authApiProvider).sendResetPin(email);
+    } catch (e) {
+      throw _parseError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      return await ref.read(authApiProvider).resetPassword(
+        email: email,
+        code: code,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+    } catch (e) {
+      throw _parseError(e);
     }
   }
 }

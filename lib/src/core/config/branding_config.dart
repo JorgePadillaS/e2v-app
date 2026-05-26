@@ -50,6 +50,7 @@ class BrandingConfig {
     policies: BusinessPolicies(
       invoicingPolicy: 'recharge',
       nitRequirementPolicy: 'optional',
+      restrictChargingWithoutVehicle: false,
     ),
   );
 }
@@ -57,16 +58,19 @@ class BrandingConfig {
 class BusinessPolicies {
   final String invoicingPolicy; // recharge, usage
   final String nitRequirementPolicy; // optional, required
+  final bool restrictChargingWithoutVehicle;
 
   BusinessPolicies({
     required this.invoicingPolicy,
     required this.nitRequirementPolicy,
+    required this.restrictChargingWithoutVehicle,
   });
 
   factory BusinessPolicies.fromJson(Map<String, dynamic> json) {
     return BusinessPolicies(
       invoicingPolicy: json['invoicing_policy'] ?? 'recharge',
       nitRequirementPolicy: json['nit_requirement_policy'] ?? 'optional',
+      restrictChargingWithoutVehicle: json['restrict_charging_without_vehicle'] ?? false,
     );
   }
 }

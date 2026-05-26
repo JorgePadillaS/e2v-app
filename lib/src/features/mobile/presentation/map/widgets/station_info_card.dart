@@ -38,8 +38,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
   @override
   Widget build(BuildContext context) {
     final name = widget.station['name']?.toString() ?? 'Ubicación Desconocida';
-    final address =
-        widget.station['address']?.toString() ?? 'Dirección no disponible';
+    final address = widget.station['address']?.toString() ?? 'Dirección no disponible';
     final lat = double.tryParse(widget.station['latitude']?.toString() ?? '');
     final lng = double.tryParse(widget.station['longitude']?.toString() ?? '');
     final googleMapsUrl = widget.station['google_maps_url']?.toString();
@@ -48,22 +47,14 @@ class _StationInfoCardState extends State<StationInfoCard> {
 
     double? distance;
     if (widget.userLocation != null && lat != null && lng != null) {
-      distance = Geolocator.distanceBetween(
-        widget.userLocation!.latitude,
-        widget.userLocation!.longitude,
-        lat,
-        lng,
-      );
+      distance = Geolocator.distanceBetween(widget.userLocation!.latitude, widget.userLocation!.longitude, lat, lng);
     }
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: Card(
-        margin:
-            widget.isCarousel
-                ? const EdgeInsets.symmetric(vertical: 8)
-                : const EdgeInsets.all(16),
+        margin: widget.isCarousel ? const EdgeInsets.symmetric(vertical: 8) : const EdgeInsets.all(16),
         elevation: 8,
         shadowColor: Colors.black26,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -76,10 +67,9 @@ class _StationInfoCardState extends State<StationInfoCard> {
               colors: [Colors.white, Colors.grey.shade50],
             ),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,10 +81,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                       width: 40,
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                     ),
                   ),
                 Row(
@@ -106,11 +93,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                         color: const Color(0xFF0076D6).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        LucideIcons.mapPin,
-                        color: Color(0xFF0076D6),
-                        size: 24,
-                      ),
+                      child: const Icon(LucideIcons.mapPin, color: Color(0xFF0076D6), size: 24),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -123,29 +106,16 @@ class _StationInfoCardState extends State<StationInfoCard> {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(
                               context,
-                            ).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF1A1A1A),
-                            ),
+                            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: const Color(0xFF1A1A1A)),
                           ),
                           const SizedBox(height: 2),
                           if (distance != null)
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(6)),
                               child: Text(
                                 'A ${_formatDistance(distance)} de ti',
-                                style: TextStyle(
-                                  color: Colors.blue.shade700,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: TextStyle(color: Colors.blue.shade700, fontSize: 11, fontWeight: FontWeight.w700),
                               ),
                             ),
                         ],
@@ -158,11 +128,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
-                          child: Icon(
-                            LucideIcons.x,
-                            size: 20,
-                            color: Colors.grey[400],
-                          ),
+                          child: Icon(LucideIcons.x, size: 20, color: Colors.grey[400]),
                         ),
                       ),
                     ),
@@ -173,10 +139,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                   address,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600], height: 1.4),
                 ),
                 const SizedBox(height: 16),
 
@@ -185,22 +148,17 @@ class _StationInfoCardState extends State<StationInfoCard> {
 
                 if (_isExpanded)
                   ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: (MediaQuery.of(context).size.height * 0.75 - 300).clamp(120.0, 400.0),
-                    ),
+                    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 16.0),
                       child: ListView.separated(
                         shrinkWrap: true,
                         padding: EdgeInsets.zero,
                         itemCount: stations.length,
-                        separatorBuilder:
-                            (context, _) => const SizedBox(height: 12),
+                        separatorBuilder: (context, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final s = Map<String, dynamic>.from(stations[index]);
-                          final sName =
-                              s['name']?.toString() ??
-                              'Dispensador ${index + 1}';
+                          final sName = s['name']?.toString() ?? 'Dispensador ${index + 1}';
                           final connectors = (s['connectors'] as List?) ?? [];
 
                           return Container(
@@ -210,11 +168,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(color: Colors.grey.shade200),
                               boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
+                                BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
                               ],
                             ),
                             child: Column(
@@ -222,23 +176,11 @@ class _StationInfoCardState extends State<StationInfoCard> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(
-                                      LucideIcons.zap,
-                                      size: 14,
-                                      color: Colors.amber,
-                                    ),
+                                    const Icon(LucideIcons.zap, size: 14, color: Colors.amber),
                                     const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        sName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13,
-                                          color: Color(0xFF333333),
-                                        ),
-                                      ),
+                                    Text(
+                                      sName,
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF333333)),
                                     ),
                                   ],
                                 ),
@@ -248,30 +190,13 @@ class _StationInfoCardState extends State<StationInfoCard> {
                                   runSpacing: 8,
                                   children:
                                       connectors.map((c) {
-                                        final status =
-                                            (c['status'] ?? '')
-                                                .toString()
-                                                .toUpperCase();
-                                        final isAvailable =
-                                            status == 'AVAILABLE';
-                                        final isBusy =
-                                            status.contains('CHARG') ||
-                                            status.contains('OCCUP');
-                                        final color =
-                                            isAvailable
-                                                ? Colors.green
-                                                : (isBusy
-                                                    ? Colors.amber
-                                                    : Colors.red);
+                                        final status = (c['status'] ?? '').toString().toUpperCase();
+                                        final isAvailable = status == 'AVAILABLE';
+                                        final isBusy = status.contains('CHARG') || status.contains('OCCUP');
+                                        final color = isAvailable ? Colors.green : (isBusy ? Colors.amber : Colors.red);
 
-                                        final type =
-                                            (c['type'] ?? 'Cargador')
-                                                .toString()
-                                                .toUpperCase();
-                                        return _buildConnectorBadge(
-                                          type,
-                                          color,
-                                        );
+                                        final type = (c['type'] ?? 'Cargador').toString().toUpperCase();
+                                        return _buildConnectorBadge(type, color);
                                       }).toList(),
                                 ),
                               ],
@@ -282,36 +207,24 @@ class _StationInfoCardState extends State<StationInfoCard> {
                     ),
                   ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  height: 54,
+                  height: 48,
                   child: ElevatedButton.icon(
                     onPressed:
-                        (lat != null && lng != null)
-                            ? () => MapService.navigateTo(
-                              lat,
-                              lng,
-                              googleMapsUrl: googleMapsUrl,
-                            )
-                            : null,
+                        (lat != null && lng != null) ? () => MapService.navigateTo(lat, lng, googleMapsUrl: googleMapsUrl) : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0076D6),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       shadowColor: const Color(0xFF0076D6).withValues(alpha: 0.4),
                     ),
                     icon: const Icon(LucideIcons.navigation, size: 18),
                     label: const Text(
                       'CÓMO LLEGAR',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        letterSpacing: 1.2,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1.2),
                     ),
                   ),
                 ),
@@ -319,17 +232,14 @@ class _StationInfoCardState extends State<StationInfoCard> {
             ),
           ),
         ),
+        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildToggleButton(int count) {
     return Material(
-      color:
-          _isExpanded
-              ? const Color(0xFF0076D6).withValues(alpha: 0.05)
-              : Colors.grey.shade100,
+      color: _isExpanded ? const Color(0xFF0076D6).withValues(alpha: 0.05) : Colors.grey.shade100,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () {
@@ -341,37 +251,25 @@ class _StationInfoCardState extends State<StationInfoCard> {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 14.0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                LucideIcons.layers,
-                size: 18,
-                color:
-                    _isExpanded
-                        ? const Color(0xFF0076D6)
-                        : Colors.grey[600],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  _isExpanded
-                      ? 'OCULTAR DISPENSADORES'
-                      : 'VER DISPENSADORES ($count)',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                    letterSpacing: 0.8,
-                    color:
-                        _isExpanded
-                            ? const Color(0xFF0076D6)
-                            : const Color(0xFF444444),
+              Row(
+                children: [
+                  Icon(LucideIcons.layers, size: 18, color: _isExpanded ? const Color(0xFF0076D6) : Colors.grey[600]),
+                  const SizedBox(width: 12),
+                  Text(
+                    _isExpanded ? 'OCULTAR DISPENSADORES' : 'VER DISPENSADORES ($count)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      letterSpacing: 0.8,
+                      color: _isExpanded ? const Color(0xFF0076D6) : const Color(0xFF444444),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ],
               ),
-              const SizedBox(width: 8),
               Icon(
                 _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
                 size: 20,
@@ -397,18 +295,7 @@ class _StationInfoCardState extends State<StationInfoCard> {
         children: [
           Icon(LucideIcons.zap, size: 12, color: color),
           const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              type,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-          ),
+          Text(type, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
         ],
       ),
     );

@@ -1,10 +1,11 @@
 import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:e2v_app/src/core/config/branding_provider.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:e2v_app/src/features/auth/presentation/vehicles_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -28,15 +29,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authData = ref.read(authControllerProvider).value;
     final user = authData?['user'] as Map? ?? {};
 
-    _nameController = TextEditingController(
-      text: user['name']?.toString() ?? '',
-    );
-    _nitController = TextEditingController(
-      text: user['billing_document']?.toString() ?? '',
-    );
-    _razonSocialController = TextEditingController(
-      text: user['billing_razon_social']?.toString() ?? '',
-    );
+    _nameController = TextEditingController(text: user['name']?.toString() ?? '');
+    _nitController = TextEditingController(text: user['billing_document']?.toString() ?? '');
+    _razonSocialController = TextEditingController(text: user['billing_razon_social']?.toString() ?? '');
     _passwordController = TextEditingController();
     _passwordConfirmController = TextEditingController();
   }
@@ -54,13 +49,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_passwordController.text.isNotEmpty &&
-        _passwordController.text != _passwordConfirmController.text) {
-      showAppToast(
-        context,
-        'Las contraseñas no coinciden',
-        type: AppToastType.error,
-      );
+    if (_passwordController.text.isNotEmpty && _passwordController.text != _passwordConfirmController.text) {
+      showAppToast(context, 'Las contraseñas no coinciden', type: AppToastType.error);
       return;
     }
 
@@ -69,7 +59,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       final data = {
         'name': _nameController.text,
-        'billing_document': _nitController.text,
+        'billing_document': _nitController.text.trim(),
         'billing_razon_social': _razonSocialController.text,
         if (_passwordController.text.isNotEmpty) ...{
           'password': _passwordController.text,
@@ -79,12 +69,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       await ref.read(authControllerProvider.notifier).updateProfile(data);
       if (mounted) {
-        showAppToast(
-          context,
-          'Perfil actualizado correctamente',
-          type: AppToastType.success,
-        );
+        showAppToast(context, 'Perfil actualizado correctamente', type: AppToastType.success);
         Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        showAppToast(context, e.toString(), type: AppToastType.error);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('¿Eliminar cuenta?'),
+            content: const Text(
+              'Esta acción es permanente y no se puede deshacer. Se eliminará tu perfil, monedero virtual y todos tus datos personales de acuerdo con el cumplimiento GDPR.\n\nLas sesiones históricas de carga serán anonimizadas.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Eliminar de todas formas'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(authControllerProvider.notifier).deleteAccount();
+      if (mounted) {
+        showAppToast(context, 'Tu cuenta ha sido eliminada correctamente.', type: AppToastType.success);
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
@@ -104,13 +129,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
+              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
             )
           else
             IconButton(onPressed: _save, icon: const Icon(LucideIcons.check)),
@@ -123,67 +142,78 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Datos Personales',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
+              Text('Datos Personales', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre Completo',
-                  prefixIcon: Icon(LucideIcons.user),
-                ),
+                decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(LucideIcons.user)),
                 validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 32),
               Text(
                 'Datos de Facturación (NIT)',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nitController,
-                decoration: const InputDecoration(
-                  labelText: 'Documento / NIT',
-                  prefixIcon: Icon(LucideIcons.fileText),
-                ),
+                decoration: const InputDecoration(labelText: 'Documento / NIT', prefixIcon: Icon(LucideIcons.fileText)),
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'El Documento / NIT es obligatorio';
+                  }
+                  final cleaned = v.trim();
+                  if (!RegExp(r'^\d+$').hasMatch(cleaned)) {
+                    return 'Debe contener solo números';
+                  }
+                  if (cleaned.length < 5 || cleaned.length > 15) {
+                    return 'Debe tener entre 5 y 15 dígitos';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _razonSocialController,
-                decoration: const InputDecoration(
-                  labelText: 'Razón Social',
-                  prefixIcon: Icon(LucideIcons.building),
+                decoration: const InputDecoration(labelText: 'Razón Social', prefixIcon: Icon(LucideIcons.building)),
+              ),
+              const SizedBox(height: 32),
+              Text('Mis Vehículos', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Card(
+                elevation: 0,
+                color: Colors.grey.shade50,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.shade200),
+                ),
+                child: ListTile(
+                  title: const Text('Administrar Vehículos', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Registra tus vehículos y placas de acuerdo con impuestos'),
+                  leading: CircleAvatar(
+                    backgroundColor: (Theme.of(context).primaryColor).withOpacity(0.1),
+                    foregroundColor: Theme.of(context).primaryColor,
+                    child: const Icon(LucideIcons.car),
+                  ),
+                  trailing: const Icon(LucideIcons.chevronRight),
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const VehiclesScreen()));
+                  },
                 ),
               ),
               const SizedBox(height: 32),
-              Text(
-                'Seguridad',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
+              Text('Seguridad', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Nueva Contraseña (Opcional)',
-                  prefixIcon: Icon(LucideIcons.lock),
-                ),
+                decoration: const InputDecoration(labelText: 'Nueva Contraseña (Opcional)', prefixIcon: Icon(LucideIcons.lock)),
                 obscureText: true,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordConfirmController,
-                decoration: const InputDecoration(
-                  labelText: 'Confirmar Nueva Contraseña',
-                  prefixIcon: Icon(LucideIcons.lock),
-                ),
+                decoration: const InputDecoration(labelText: 'Confirmar Nueva Contraseña', prefixIcon: Icon(LucideIcons.lock)),
                 obscureText: true,
               ),
               const SizedBox(height: 32),
@@ -191,9 +221,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _save,
-                  child: const Text('Guardar Cambios'),
+                child: ElevatedButton(onPressed: _isLoading ? null : _save, child: const Text('Guardar Cambios')),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _isLoading ? null : _deleteAccount,
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
+                  child: const Text('Eliminar Cuenta (GDPR)'),
                 ),
               ),
             ],
@@ -217,12 +253,7 @@ class _LegalSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Información Legal',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
+        Text('Información Legal', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         ListTile(
           contentPadding: EdgeInsets.zero,

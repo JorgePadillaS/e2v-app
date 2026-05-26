@@ -256,8 +256,9 @@ class NdefRecord {
       Uint8List identifier, Uint8List payload) {
     switch (format) {
       case NdefTypeNameFormat.empty:
-        if (type.isNotEmpty || identifier.isNotEmpty || payload.isNotEmpty)
+        if (type.isNotEmpty || identifier.isNotEmpty || payload.isNotEmpty) {
           throw ('unexpected data in EMPTY record');
+        }
         break;
       case NdefTypeNameFormat.nfcWellknown:
       case NdefTypeNameFormat.media:

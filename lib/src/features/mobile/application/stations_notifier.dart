@@ -41,7 +41,7 @@ class StationsNotifier
   Future<void> fetchStations() async {
     if (_api == null) return;
     try {
-      final list = await _api.stations();
+      final list = await _api!.stations();
       
       final Map<int, Map<String, dynamic>> grouped = {};
       

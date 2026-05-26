@@ -74,34 +74,34 @@ class _QrScanPageState extends State<QrScanPage> {
       ),
       body:
           isManual
-              ? Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text('Pega el contenido del QR del cargador.'),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: ctrl,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Contenido QR',
-                        border: OutlineInputBorder(),
+              ? SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text('Pega el contenido del QR del cargador.'),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: ctrl,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Contenido QR',
+                          border: OutlineInputBorder(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: () {
-                        final parsed = _parse(ctrl.text.trim());
-                        Navigator.pop(context, parsed);
-                      },
-                      icon: const Icon(Icons.qr_code_2),
-                      label: const Text('Procesar QR'),
-                    ),
-                  ],
-                ),
-              )
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: () {
+                          final parsed = _parse(ctrl.text.trim());
+                          Navigator.pop(context, parsed);
+                        },
+                        icon: const Icon(Icons.qr_code_2),
+                        label: const Text('Procesar QR'),
+                      ),
+                    ],
+                  ),
+                )
               : Stack(
                 children: [
                   MobileScanner(onDetect: _onDetect),

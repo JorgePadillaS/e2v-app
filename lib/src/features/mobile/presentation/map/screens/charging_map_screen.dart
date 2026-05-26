@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
 import 'package:e2v_app/src/features/mobile/application/stations_notifier.dart';
 import 'package:e2v_app/src/features/mobile/presentation/map/widgets/station_info_card.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class ChargingMapScreen extends ConsumerStatefulWidget {
   const ChargingMapScreen({super.key, required this.api});
@@ -76,12 +76,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
       final lng = double.tryParse(loc['longitude']?.toString() ?? '');
 
       if (lat != null && lng != null) {
-        final distance = Geolocator.distanceBetween(
-          _userLocation!.latitude,
-          _userLocation!.longitude,
-          lat,
-          lng,
-        );
+        final distance = Geolocator.distanceBetween(_userLocation!.latitude, _userLocation!.longitude, lat, lng);
 
         if (minDistance == null || distance < minDistance) {
           minDistance = distance;
@@ -98,11 +93,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
       });
       _moveToLocation(nearestLocation);
       if (nearestIndex != -1) {
-        _pageController.animateToPage(
-          nearestIndex,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.fastOutSlowIn,
-        );
+        _pageController.animateToPage(nearestIndex, duration: const Duration(milliseconds: 500), curve: Curves.fastOutSlowIn);
       }
     }
   }
@@ -112,9 +103,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
     final stationsAsync = ref.watch(stationsProvider);
 
     return stationsAsync.when(
-      loading:
-          () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, st) => Scaffold(body: Center(child: Text('Error: $e'))),
       data: (locations) {
         // Now 'locations' is already the grouped list from StationsNotifier
@@ -140,11 +129,9 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
                     for (var s in stations) {
                       final connectors = (s['connectors'] as List?) ?? [];
                       for (var c in connectors) {
-                        final status =
-                            (c['status'] ?? '').toString().toUpperCase();
+                        final status = (c['status'] ?? '').toString().toUpperCase();
                         if (status == 'AVAILABLE') hasAvailable = true;
-                        if (status.contains('CHARG') ||
-                            status.contains('OCCUP')) {
+                        if (status.contains('CHARG') || status.contains('OCCUP')) {
                           hasCharging = true;
                         }
                       }
@@ -185,33 +172,17 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
                                 duration: const Duration(milliseconds: 300),
                                 width: 70,
                                 height: 70,
-                                decoration: BoxDecoration(
-                                  color: color.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
+                                decoration: BoxDecoration(color: color.withOpacity(0.2), shape: BoxShape.circle),
                               ),
                             Container(
                               padding: EdgeInsets.all(isSelected ? 6 : 4),
                               decoration: BoxDecoration(
                                 color: color,
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
                               ),
-                              child: const Icon(
-                                LucideIcons.zap,
-                                color: Colors.white,
-                                size: 24,
-                              ),
+                              child: const Icon(LucideIcons.zap, color: Colors.white, size: 24),
                             ),
                           ],
                         ),
@@ -231,10 +202,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
               width: 40,
               height: 40,
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.3), shape: BoxShape.circle),
                 child: Center(
                   child: Container(
                     width: 14,
@@ -256,9 +224,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                initialCenter:
-                    _userLocation ??
-                    (markers.isNotEmpty ? markers.first.point : _defaultCenter),
+                initialCenter: _userLocation ?? (markers.isNotEmpty ? markers.first.point : _defaultCenter),
                 initialZoom: 13.0,
                 onTap:
                     (_, __) => setState(() {
@@ -269,7 +235,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'bo.e2v.electropoint',
+                  userAgentPackageName: 'com.evbol.e2v_app',
                 ),
                 MarkerLayer(markers: markers),
               ],
@@ -326,18 +292,11 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
               left: 0,
               right: 0,
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.85,
-                ),
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
                   curve: Curves.fastOutSlowIn,
-                  height:
-                      _selectedLocation == null
-                          ? 0
-                          : (_isCardExpanded
-                              ? MediaQuery.of(context).size.height * 0.75
-                              : (290.0 * (MediaQuery.maybeTextScalerOf(context)?.scale(1) ?? 1.0)).clamp(290.0, 360.0)),
+                  height: _selectedLocation == null ? 0 : (_isCardExpanded ? MediaQuery.of(context).size.height * 0.75 : 290),
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: listLocations.length,

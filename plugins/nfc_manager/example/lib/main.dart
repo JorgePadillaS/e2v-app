@@ -9,6 +9,8 @@ void main() {
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
   State<StatefulWidget> createState() => MyAppState();
 }
@@ -55,13 +57,13 @@ class MyAppState extends State<MyApp> {
                           mainAxisSpacing: 4,
                           children: [
                             ElevatedButton(
-                                child: Text('Tag Read'), onPressed: _tagRead),
+                                onPressed: _tagRead, child: Text('Tag Read')),
                             ElevatedButton(
-                                child: Text('Ndef Write'),
-                                onPressed: _ndefWrite),
+                                onPressed: _ndefWrite,
+                                child: Text('Ndef Write')),
                             ElevatedButton(
-                                child: Text('Ndef Write Lock'),
-                                onPressed: _ndefWriteLock),
+                                onPressed: _ndefWriteLock,
+                                child: Text('Ndef Write Lock')),
                           ],
                         ),
                       ),

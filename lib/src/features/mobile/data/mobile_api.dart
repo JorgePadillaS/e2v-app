@@ -98,10 +98,14 @@ class MobileApi {
   Future<Map<String, dynamic>> startStation(
     int stationId, {
     int? connectorId,
+    int? vehicleId,
   }) async {
     final res = await _dio.post(
       'sessions/$stationId/start',
-      data: {if (connectorId != null) 'connector_id': connectorId},
+      data: {
+        if (connectorId != null) 'connector_id': connectorId,
+        if (vehicleId != null) 'vehicle_id': vehicleId,
+      },
     );
     return Map<String, dynamic>.from(res.data as Map);
   }
@@ -146,5 +150,36 @@ class MobileApi {
 
   Future<void> updateFcmToken(String fcmToken) async {
     await _dio.post('profile/fcm-token', data: {'fcm_token': fcmToken});
+  }
+
+  // --- VEHICLES API ---
+  Future<List<dynamic>> getVehicles() async {
+    final res = await _dio.get('vehicles');
+    return (res.data['data'] as List).toList();
+  }
+
+  Future<Map<String, dynamic>> addVehicle({
+    required String brand,
+    required String model,
+    required String plate,
+    String? vin,
+    double? batteryCapacity,
+  }) async {
+    final res = await _dio.post(
+      'vehicles',
+      data: {
+        'brand': brand,
+        'model': model,
+        'plate': plate,
+        if (vin != null) 'vin': vin,
+        if (batteryCapacity != null) 'battery_capacity': batteryCapacity,
+      },
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>> deleteVehicle(int vehicleId) async {
+    final res = await _dio.delete('vehicles/$vehicleId');
+    return Map<String, dynamic>.from(res.data as Map);
   }
 }

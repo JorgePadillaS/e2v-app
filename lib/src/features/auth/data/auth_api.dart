@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:e2v_app/src/core/config/app_config.dart';
-import 'package:flutter/foundation.dart';
 
 class AuthApi {
   final Dio _dio = Dio(
@@ -59,31 +58,8 @@ class AuthApi {
   }
 
   Future<Map<String, dynamic>> loginWithGoogle(String idToken) async {
-    try {
-      final res = await _dio.post(
-        'google-login',
-        data: {'id_token': idToken},
-      );
-      debugPrint('✅ Google Login Response: ${res.statusCode}');
-      debugPrint('Response data: ${res.data}');
-
-      if (res.data is! Map) {
-        throw Exception('Response is not a Map: ${res.data.runtimeType}');
-      }
-
-      final data = Map<String, dynamic>.from(res.data as Map);
-
-      // Verificar si la respuesta tiene 'token'
-      if (!data.containsKey('token')) {
-        debugPrint('⚠️ Response no tiene "token". Keys: ${data.keys}');
-        debugPrint('Full response: $data');
-      }
-
-      return data;
-    } catch (e) {
-      debugPrint('❌ Error en loginWithGoogle: $e');
-      rethrow;
-    }
+    final res = await _dio.post('google-login', data: {'id_token': idToken});
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
   Future<Map<String, dynamic>> profile(String token) async {
@@ -112,5 +88,38 @@ class AuthApi {
       data: {'fcm_token': fcmToken},
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
+  }
+
+  Future<void> deleteAccount(String token) async {
+    await _dio.delete(
+      'profile',
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+  }
+
+  Future<Map<String, dynamic>> sendResetPin(String email) async {
+    final res = await _dio.post(
+      'password/email',
+      data: {'email': email},
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final res = await _dio.post(
+      'password/reset',
+      data: {
+        'email': email,
+        'code': code,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      },
+    );
+    return Map<String, dynamic>.from(res.data as Map);
   }
 }
