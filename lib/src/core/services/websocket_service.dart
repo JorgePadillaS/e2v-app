@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:laravel_echo/laravel_echo.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import 'package:flutter/foundation.dart';

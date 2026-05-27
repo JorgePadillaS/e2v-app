@@ -60,12 +60,9 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
           }
 
           final rows = (snap.data?['data'] as List?) ?? const [];
-          
+
           if (rows.isEmpty && snap.connectionState != ConnectionState.waiting) {
-            return ListView(children: const [
-              SizedBox(height: 100),
-              Center(child: Text('Sin sesiones registradas')),
-            ]);
+            return ListView(children: const [SizedBox(height: 100), Center(child: Text('Sin sesiones registradas'))]);
           }
 
           return ListView.builder(
@@ -78,12 +75,9 @@ class _SessionsPageState extends ConsumerState<SessionsPage> {
               if (status == 'Active') {
                 return _ActiveSessionCard(session: s);
               }
-              
+
               if (status == 'Starting') {
-                return _StartingSessionCard(
-                  session: s,
-                  onCancel: () => _reload(),
-                );
+                return _StartingSessionCard(session: s, onCancel: () => _reload());
               }
 
               return _HistorySessionCard(session: s);
@@ -102,7 +96,7 @@ class _StartingSessionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sessionId = session['id'];
+    //final sessionId = session['id'];
 
     return Card(
       elevation: 4,
@@ -117,31 +111,15 @@ class _StartingSessionCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 3),
-                ),
+                const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3)),
                 const SizedBox(width: 16),
-                const Expanded(
-                  child: Text(
-                    'Iniciando carga...',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                const Expanded(child: Text('Iniciando carga...', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(20)),
                   child: Text(
                     'SOLICITADO',
-                    style: TextStyle(
-                      color: Colors.blue.shade700,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 10),
                   ),
                 ),
               ],
@@ -172,34 +150,37 @@ class _StartingSessionCard extends ConsumerWidget {
   void _handleCancel(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Cancelar solicitud?'),
-        content: const Text('Si el cargador no responde, puedes cancelar la solicitud para intentar nuevamente o usar otro conector.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('VOLVER')),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final api = (context.findAncestorStateOfType<_SessionsPageState>()?.widget.api);
-              if (api != null) {
-                try {
-                  await api.cancelSession(session['id']);
-                  ref.read(activeSessionProvider.notifier).refresh();
-                  onCancel();
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('No se pudo cancelar la solicitud.')),
-                    );
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('¿Cancelar solicitud?'),
+            content: const Text(
+              'Si el cargador no responde, puedes cancelar la solicitud para intentar nuevamente o usar otro conector.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('VOLVER')),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final api = (context.findAncestorStateOfType<_SessionsPageState>()?.widget.api);
+                  if (api != null) {
+                    try {
+                      await api.cancelSession(session['id']);
+                      ref.read(activeSessionProvider.notifier).refresh();
+                      onCancel();
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text('No se pudo cancelar la solicitud.')));
+                      }
+                    }
                   }
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('CANCELAR', style: TextStyle(color: Colors.white)),
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('CANCELAR', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -215,14 +196,17 @@ class _ActiveSessionCard extends ConsumerWidget {
     final energy = metrics['energy_kwh'] ?? 0.0;
     final soc = metrics['soc'];
     final cost = session['total_cost'] ?? 0.0;
-    
+
     final startTime = DateTime.tryParse(session['start_time'] ?? '') ?? DateTime.now();
     final elapsed = DateTime.now().difference(startTime);
 
     return Card(
       elevation: 8,
       margin: const EdgeInsets.only(bottom: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.green, width: 2)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Colors.green, width: 2),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -231,9 +215,7 @@ class _ActiveSessionCard extends ConsumerWidget {
               children: [
                 const Icon(Icons.bolt, color: Colors.green, size: 32),
                 const SizedBox(width: 12),
-                const Expanded(
-                  child: Text('Carga en Progreso', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                ),
+                const Expanded(child: Text('Carga en Progreso', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(20)),
@@ -289,7 +271,10 @@ class _ActiveSessionCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            const Text('El cargador se detendrá automáticamente al completar.', style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const Text(
+              'El cargador se detendrá automáticamente al completar.',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
           ],
         ),
       ),
@@ -299,27 +284,28 @@ class _ActiveSessionCard extends ConsumerWidget {
   void _confirmStop(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Detener carga?'),
-        content: const Text('Se enviará la orden de parada al cargador y se realizará el ajuste final de tu saldo.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              final api = (context.findAncestorStateOfType<_SessionsPageState>()?.widget.api);
-              if (api != null) {
-                api.stopStation(session['station_id']).then((_) {
-                  ref.read(activeSessionProvider.notifier).refresh();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Orden de parada enviada.')));
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('SÍ, DETENER', style: TextStyle(color: Colors.white)),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('¿Detener carga?'),
+            content: const Text('Se enviará la orden de parada al cargador y se realizará el ajuste final de tu saldo.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR')),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  final api = (context.findAncestorStateOfType<_SessionsPageState>()?.widget.api);
+                  if (api != null) {
+                    api.stopStation(session['station_id']).then((_) {
+                      ref.read(activeSessionProvider.notifier).refresh();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Orden de parada enviada.')));
+                    });
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('SÍ, DETENER', style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -335,7 +321,7 @@ class _HistorySessionCard extends StatelessWidget {
     final energy = session['total_energy_kwh'] ?? 0.0;
     final cost = session['total_cost'] ?? 0.0;
 
-    String _fmt(DateTime? d) => d == null ? '-' : '${d.day}/${d.month} ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+    String fmt(DateTime? d) => d == null ? '-' : '${d.day}/${d.month} ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -348,23 +334,24 @@ class _HistorySessionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('Inicio: ${_fmt(start)}'),
-            Text('Fin: ${_fmt(end)}'),
+            Text('Inicio: ${fmt(start)}'),
+            Text('Fin: ${fmt(end)}'),
             Text('Energía: $energy kWh · Costo: Bs $cost'),
           ],
         ),
         isThreeLine: true,
-        trailing: (session['invoice_url'] != null)
-            ? IconButton(
-                icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
-                onPressed: () async {
-                  final url = Uri.parse(session['invoice_url']);
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                  }
-                },
-              )
-            : null,
+        trailing:
+            (session['invoice_url'] != null)
+                ? IconButton(
+                  icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
+                  onPressed: () async {
+                    final url = Uri.parse(session['invoice_url']);
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                )
+                : null,
       ),
     );
   }

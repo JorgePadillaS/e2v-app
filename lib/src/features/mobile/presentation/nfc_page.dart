@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'dart:typed_data';
 
 import 'package:e2v_app/src/core/ui/app_toast.dart';
 import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
@@ -11,7 +10,6 @@ import 'package:e2v_app/src/features/mobile/presentation/vehicle_selector.dart';
 import 'package:e2v_app/src/features/auth/presentation/vehicles_screen.dart';
 import 'package:e2v_app/src/features/auth/presentation/profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
