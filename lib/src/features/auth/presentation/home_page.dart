@@ -446,7 +446,7 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
                 ],
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
-                  value: _docType,
+                  initialValue: _docType,
                   decoration: const InputDecoration(labelText: 'Tipo de Documento', border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: 'NIT', child: Text('NIT')),

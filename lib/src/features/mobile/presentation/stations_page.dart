@@ -266,7 +266,7 @@ class _LocationCard extends StatelessWidget {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFF0076D6).withOpacity(0.08), Colors.white],
+                colors: [const Color(0xFF0076D6).withValues(alpha: 0.08), Colors.white],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -382,17 +382,17 @@ class _LocationCard extends StatelessWidget {
                                       duration: const Duration(milliseconds: 200),
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       decoration: BoxDecoration(
-                                        color: isSelected ? const Color(0xFF0076D6) : color.withOpacity(0.12),
+                                        color: isSelected ? const Color(0xFF0076D6) : color.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: isSelected ? const Color(0xFF0076D6) : color.withOpacity(0.4),
+                                          color: isSelected ? const Color(0xFF0076D6) : color.withValues(alpha: 0.4),
                                           width: 2,
                                         ),
                                         boxShadow:
                                             isSelected
                                                 ? [
                                                   BoxShadow(
-                                                    color: Colors.blue.withOpacity(0.3),
+                                                    color: Colors.blue.withValues(alpha: 0.3),
                                                     blurRadius: 8,
                                                     offset: const Offset(0, 2),
                                                   ),

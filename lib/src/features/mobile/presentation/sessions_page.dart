@@ -227,9 +227,16 @@ class _ActiveSessionCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _MetricItem(label: 'Potencia', value: '$power', unit: 'kW', icon: Icons.speed),
-                _MetricItem(label: 'Energía', value: '$energy', unit: 'kWh', icon: Icons.electric_bolt),
-                _MetricItem(label: 'Batería', value: soc != null ? '$soc' : '-', unit: '%', icon: Icons.battery_charging_full),
+                Expanded(child: _MetricItem(label: 'Potencia', value: '$power', unit: 'kW', icon: Icons.speed)),
+                Expanded(child: _MetricItem(label: 'Energía', value: '$energy', unit: 'kWh', icon: Icons.electric_bolt)),
+                Expanded(
+                  child: _MetricItem(
+                    label: 'Batería',
+                    value: soc != null ? '$soc' : '-',
+                    unit: '%',
+                    icon: Icons.battery_charging_full,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -239,19 +246,34 @@ class _ActiveSessionCard extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Costo Actual', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      Text('Bs $cost', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Costo Actual', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        Text(
+                          'Bs $cost',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
+                        ),
+                      ],
+                    ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text('Tiempo', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      Text('${elapsed.inMinutes} min', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                    ],
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Tiempo', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        Text(
+                          '${elapsed.inMinutes} min',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -291,14 +313,15 @@ class _ActiveSessionCard extends ConsumerWidget {
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR')),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(ctx);
                   final api = (context.findAncestorStateOfType<_SessionsPageState>()?.widget.api);
+                  final activeSessionNotifier = ref.read(activeSessionProvider.notifier);
+                  final messenger = ScaffoldMessenger.of(context);
                   if (api != null) {
-                    api.stopStation(session['station_id']).then((_) {
-                      ref.read(activeSessionProvider.notifier).refresh();
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Orden de parada enviada.')));
-                    });
+                    await api.stopStation(session['station_id']);
+                    activeSessionNotifier.refresh();
+                    messenger.showSnackBar(const SnackBar(content: Text('Orden de parada enviada.')));
                   }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -329,14 +352,19 @@ class _HistorySessionCard extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: const CircleAvatar(backgroundColor: Colors.blueGrey, child: Icon(Icons.history, color: Colors.white)),
-        title: Text('Tx #${session['transaction_id'] ?? session['id']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Tx #${session['transaction_id'] ?? session['id']}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('Inicio: ${fmt(start)}'),
-            Text('Fin: ${fmt(end)}'),
-            Text('Energía: $energy kWh · Costo: Bs $cost'),
+            Text('Inicio: ${fmt(start)}', maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text('Fin: ${fmt(end)}', maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text('Energía: $energy kWh · Costo: Bs $cost', maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
         isThreeLine: true,
@@ -370,10 +398,22 @@ class _MetricItem extends StatelessWidget {
       children: [
         Icon(icon, color: Colors.grey.shade600, size: 20),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         Text(unit, style: const TextStyle(fontSize: 10, color: Colors.grey)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+        ),
       ],
     );
   }

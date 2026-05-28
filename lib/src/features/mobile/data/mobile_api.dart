@@ -6,11 +6,7 @@ class MobileApi {
     : _dio = Dio(
         BaseOptions(
           baseUrl: AppConfig.apiBaseUrl,
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
+          headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': 'Bearer $token'},
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 30),
         ),
@@ -48,10 +44,7 @@ class MobileApi {
   }
 
   Future<Map<String, dynamic>> profile(String token) async {
-    final res = await _dio.get(
-      'profile',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-    );
+    final res = await _dio.get('profile', options: Options(headers: {'Authorization': 'Bearer $token'}));
     return Map<String, dynamic>.from(res.data as Map);
   }
 
@@ -95,17 +88,10 @@ class MobileApi {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
-  Future<Map<String, dynamic>> startStation(
-    int stationId, {
-    int? connectorId,
-    int? vehicleId,
-  }) async {
+  Future<Map<String, dynamic>> startStation(int stationId, {int? connectorId, int? vehicleId}) async {
     final res = await _dio.post(
       'sessions/$stationId/start',
-      data: {
-        if (connectorId != null) 'connector_id': connectorId,
-        if (vehicleId != null) 'vehicle_id': vehicleId,
-      },
+      data: {if (connectorId != null) 'connector_id': connectorId, if (vehicleId != null) 'vehicle_id': vehicleId},
     );
     return Map<String, dynamic>.from(res.data as Map);
   }
@@ -121,10 +107,7 @@ class MobileApi {
   }
 
   Future<Map<String, dynamic>> lookupStation(String chargeBoxId) async {
-    final res = await _dio.get(
-      'map/stations/lookup',
-      queryParameters: {'charge_box_id': chargeBoxId},
-    );
+    final res = await _dio.get('map/stations/lookup', queryParameters: {'charge_box_id': chargeBoxId});
     return Map<String, dynamic>.from(res.data as Map);
   }
 

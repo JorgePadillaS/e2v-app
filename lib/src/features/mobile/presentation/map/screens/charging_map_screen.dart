@@ -172,7 +172,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
                                 duration: const Duration(milliseconds: 300),
                                 width: 70,
                                 height: 70,
-                                decoration: BoxDecoration(color: color.withOpacity(0.2), shape: BoxShape.circle),
+                                decoration: BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
                               ),
                             Container(
                               padding: EdgeInsets.all(isSelected ? 6 : 4),
@@ -202,7 +202,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
               width: 40,
               height: 40,
               child: Container(
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.3), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.3), shape: BoxShape.circle),
                 child: Center(
                   child: Container(
                     width: 14,

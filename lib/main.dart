@@ -1,9 +1,12 @@
 import 'package:e2v_app/src/app.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:e2v_app/firebase_options.dart';
+import 'package:e2v_app/src/core/config/app_config.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: AppStartupWidget()));
@@ -29,9 +32,13 @@ class _AppStartupWidgetState extends State<AppStartupWidget> {
     try {
       await Geolocator.requestPermission();
     } catch (_) {}
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await AppConfig.loadRemoteConfig();
+    if (kDebugMode) {
+      print(
+        '*** Remote config loaded: apiBaseUrl=${AppConfig.apiBaseUrl}, wsHost=${AppConfig.wsHost}, reverbKey=${AppConfig.reverbKey}, disclaimerUrl=${AppConfig.disclaimerUrl} ***',
+      );
+    }
   }
 
   @override
@@ -41,14 +48,7 @@ class _AppStartupWidgetState extends State<AppStartupWidget> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: Text(
-                  'Firebase Error: ${snapshot.error}',
-                  textDirection: TextDirection.ltr,
-                ),
-              ),
-            ),
+            home: Scaffold(body: Center(child: Text('Firebase Error: ${snapshot.error}', textDirection: TextDirection.ltr))),
           );
         }
 

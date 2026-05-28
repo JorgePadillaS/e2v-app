@@ -112,7 +112,7 @@ class _QrConnectorSelectPageState extends State<QrConnectorSelectPage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: color, width: 3),
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
             ),
             child: Column(
               children: [

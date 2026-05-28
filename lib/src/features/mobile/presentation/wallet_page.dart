@@ -327,7 +327,9 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: isActive ? Colors.blue.shade200 : Colors.grey.shade300),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))],
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,7 +376,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: isActive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -438,8 +440,9 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     return FutureBuilder<Map<String, dynamic>>(
       future: _walletFuture,
       builder: (context, snapshot) {
-        if (snapshot.hasError)
+        if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red, fontSize: 12)));
+        }
 
         final data = snapshot.data ?? {};
         final balance = double.tryParse(data['balance']?.toString() ?? '0') ?? 0.0;
@@ -451,12 +454,12 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+              colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: theme.primaryColor.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [BoxShadow(color: theme.primaryColor.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,16 +571,19 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     return FutureBuilder<Map<String, dynamic>>(
       future: _txFuture,
       builder: (context, snapshot) {
-        if (snapshot.hasError)
+        if (snapshot.hasError) {
           return SliverToBoxAdapter(child: Center(child: Text('Fallo al cargar movimientos: ${snapshot.error}')));
-        if (snapshot.connectionState == ConnectionState.waiting && !_isRefreshing)
+        }
+        if (snapshot.connectionState == ConnectionState.waiting && !_isRefreshing) {
           return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+        }
 
         final list = (snapshot.data?['data'] as List?) ?? [];
-        if (list.isEmpty)
+        if (list.isEmpty) {
           return const SliverToBoxAdapter(
             child: Center(child: Text('Sin movimientos recientes', style: TextStyle(color: Colors.grey))),
           );
+        }
 
         // 1. RECARGAS PENDIENTES
         final pendingRecharges =
@@ -763,7 +769,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: CircleAvatar(
-              backgroundColor: Colors.green.withOpacity(0.1),
+              backgroundColor: Colors.green.withValues(alpha: 0.1),
               child: const Icon(Icons.add, color: Colors.green),
             ),
             title: Text(
@@ -812,7 +818,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: CircleAvatar(
-              backgroundColor: Colors.red.withOpacity(0.1),
+              backgroundColor: Colors.red.withValues(alpha: 0.1),
               child: const Icon(Icons.remove, color: Colors.red),
             ),
             title: Text(

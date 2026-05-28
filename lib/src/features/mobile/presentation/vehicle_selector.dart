@@ -147,7 +147,7 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? primaryColor.withOpacity(0.04) : Colors.white,
+                                  color: isSelected ? primaryColor.withValues(alpha: 0.04) : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: isSelected ? primaryColor : Colors.grey.shade200,
@@ -200,7 +200,7 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isSelected ? primaryColor.withOpacity(0.04) : Colors.white,
+                                color: isSelected ? primaryColor.withValues(alpha: 0.04) : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: isSelected ? primaryColor : Colors.grey.shade200,
@@ -212,7 +212,7 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? primaryColor.withOpacity(0.1) : Colors.grey.shade100,
+                                      color: isSelected ? primaryColor.withValues(alpha: 0.1) : Colors.grey.shade100,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(

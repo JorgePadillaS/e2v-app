@@ -136,7 +136,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: Icon(LucideIcons.car, size: 72, color: primaryColor),
             ),
             const SizedBox(height: 24),
@@ -195,7 +195,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: primaryColor.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
                   child: Icon(LucideIcons.car, color: primaryColor, size: 32),
                 ),
                 const SizedBox(width: 16),

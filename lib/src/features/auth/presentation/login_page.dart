@@ -396,8 +396,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              Expanded(
-                                flex: 1,
+                              SizedBox(
+                                width: 92,
                                 child: _buildDropdownField(
                                   value: billingDocType.text,
                                   label: 'Tipo',
@@ -497,12 +497,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                               billingDocType: billingDocType.text,
                                               billingRazonSocial: billingRazonSocial.text.trim(),
                                             );
-                                        if (mounted) {
+                                        if (context.mounted) {
                                           showDialog(
                                             context: context,
                                             barrierDismissible: false,
                                             builder:
-                                                (context) => AlertDialog(
+                                                (dialogContext) => AlertDialog(
                                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                                   title: Text('¡Bienvenido, ${name.text.trim()}!'),
                                                   content: const Column(
@@ -519,7 +519,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                                   ),
                                                   actions: [
                                                     TextButton(
-                                                      onPressed: () => Navigator.pop(context),
+                                                      onPressed: () => Navigator.pop(dialogContext),
                                                       child: const Text('Comenzar'),
                                                     ),
                                                   ],
@@ -667,11 +667,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     required void Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
-      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      initialValue: value,
+      isExpanded: true,
+      iconSize: 18,
+      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis))).toList(),
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

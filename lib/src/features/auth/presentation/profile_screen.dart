@@ -192,7 +192,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   title: const Text('Administrar Vehículos', style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: const Text('Registra tus vehículos y placas de acuerdo con impuestos'),
                   leading: CircleAvatar(
-                    backgroundColor: (Theme.of(context).primaryColor).withOpacity(0.1),
+                    backgroundColor: (Theme.of(context).primaryColor).withValues(alpha: 0.1),
                     foregroundColor: Theme.of(context).primaryColor,
                     child: const Icon(LucideIcons.car),
                   ),

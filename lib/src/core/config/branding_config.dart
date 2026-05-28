@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_config.dart';
+
 class BrandingConfig {
   final String platformName;
   final String? logoUrl;
@@ -24,10 +26,7 @@ class BrandingConfig {
       logoUrl: data['logo_url'],
       branding: BrandingColors.fromJson(data['branding']),
       legal: LegalConfig.fromJson(data['legal']),
-      promotions:
-          (data['promotions'] as List)
-              .map((p) => Promotion.fromJson(p))
-              .toList(),
+      promotions: (data['promotions'] as List).map((p) => Promotion.fromJson(p)).toList(),
       policies: BusinessPolicies.fromJson(data['policies'] ?? {}),
     );
   }
@@ -42,10 +41,7 @@ class BrandingConfig {
       textColor: const Color(0xFF333333),
       fontFamily: 'Manrope',
     ),
-    legal: LegalConfig(
-      disclaimerUrl: 'https://e2v.evbol.com/disclaimer',
-      isDisclaimerVisible: true,
-    ),
+    legal: LegalConfig(disclaimerUrl: AppConfig.disclaimerUrl, isDisclaimerVisible: true),
     promotions: [],
     policies: BusinessPolicies(
       invoicingPolicy: 'recharge',
@@ -93,10 +89,7 @@ class BrandingColors {
   factory BrandingColors.fromJson(Map<String, dynamic> json) {
     return BrandingColors(
       primaryColor: _parseColor(json['primary_color'], const Color(0xFF0076D6)),
-      secondaryColor: _parseColor(
-        json['secondary_color'],
-        const Color(0xFF0E4A7B),
-      ),
+      secondaryColor: _parseColor(json['secondary_color'], const Color(0xFF0E4A7B)),
       buttonColor: _parseColor(json['button_color'], const Color(0xFF0076D6)),
       textColor: _parseColor(json['text_color'], const Color(0xFF333333)),
       fontFamily: json['font_family'] ?? 'Manrope',
@@ -123,10 +116,7 @@ class LegalConfig {
   LegalConfig({required this.disclaimerUrl, required this.isDisclaimerVisible});
 
   factory LegalConfig.fromJson(Map<String, dynamic> json) {
-    return LegalConfig(
-      disclaimerUrl: json['disclaimer_url'] ?? '',
-      isDisclaimerVisible: json['is_disclaimer_visible'] ?? false,
-    );
+    return LegalConfig(disclaimerUrl: json['disclaimer_url'] ?? '', isDisclaimerVisible: json['is_disclaimer_visible'] ?? false);
   }
 }
 

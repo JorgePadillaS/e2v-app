@@ -49,6 +49,7 @@ dependencies:
   google_sign_in: ^6.2.1
   firebase_core: any
   firebase_messaging: any
+  firebase_remote_config: any
   app_links: ^6.3.3
   mobile_scanner: ^6.0.4
   geolocator: ^13.0.1
