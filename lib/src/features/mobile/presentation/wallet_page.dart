@@ -25,8 +25,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
   Future<Map<String, dynamic>>? _txFuture;
 
   bool _isRefreshing = false;
-  final amountCtrl = TextEditingController(text: '10');
-  final List<double> quickAmounts = const [10, 30, 60, 90, 150];
+  final amountCtrl = TextEditingController(text: '50');
+  final List<double> quickAmounts = const [50, 100, 150];
   double selectedAmount = 10;
 
   // Plugins (Safe Init)
@@ -153,7 +153,14 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
               children: [
                 Icon(LucideIcons.alertTriangle, color: Colors.orange),
                 SizedBox(width: 8),
-                Text('Documento Requerido', style: TextStyle(fontWeight: FontWeight.bold)),
+                Expanded(
+                  child: Text(
+                    'Documento Requerido',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             ),
             content: Text(message),
@@ -185,7 +192,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
     try {
       final res = await widget.api.libelulaCheckout(amount);
-      if (mounted) Navigator.pop(context);
+      if (!mounted) return;
+      Navigator.pop(context);
       final txId = int.tryParse(res['transaction_id']?.toString() ?? '');
       final url = res['payment_url']?.toString() ?? '';
       if (url.isEmpty) throw Exception('No se pudo generar la URL de pago.');
@@ -193,7 +201,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       _reload();
       await launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView);
     } catch (e) {
-      if (mounted) Navigator.pop(context);
+      if (!mounted) return;
+      Navigator.pop(context);
       if (e is DioException) {
         final data = e.response?.data;
         if (data is Map && data['status'] == 'billing_document_required') {
@@ -263,8 +272,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                     children: [
                       const Text('Recargar Saldo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-                      _buildQuickAmounts(theme),
-                      const SizedBox(height: 12),
+                      //_buildQuickAmounts(theme),
+                      //const SizedBox(height: 12),
                       _buildManualAmountField(theme),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -309,10 +318,10 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
               child: Text('Mis Tarjetas Físicas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
             SizedBox(
-              height: 160,
+              height: 168,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 itemCount: tags.length,
                 itemBuilder: (context, i) {
                   final tag = Map<String, dynamic>.from(tags[i] as Map);
@@ -322,7 +331,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                   return Container(
                     width: 220,
                     margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -354,10 +363,12 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        //const SizedBox(height: 2),
                         Text(
                           tag['tag_code']?.toString() ?? '000000',
                           style: TextStyle(fontFamily: 'monospace', color: Colors.grey.shade700, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const Spacer(),
                         Row(
@@ -370,25 +381,30 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                                 Text(
                                   'Bs ${tagBalance.toStringAsFixed(2)}',
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                isActive ? 'ACTIVA' : 'INACTIVA',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: isActive ? Colors.green : Colors.red,
-                                ),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isActive ? 'ACTIVA' : 'INACTIVA',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: isActive ? Colors.green : Colors.red,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -408,7 +424,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: const Text('Identificar Tarjeta'),
             content: TextField(
               controller: controller,
@@ -416,17 +432,19 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
               autofocus: true,
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('CANCELAR')),
               FilledButton(
                 onPressed: () async {
+                  final navigator = Navigator.of(dialogContext);
+                  final messenger = ScaffoldMessenger.of(dialogContext);
                   try {
                     await widget.api.updateTag(tagId, controller.text);
-                    if (mounted) {
-                      Navigator.pop(context);
+                    if (dialogContext.mounted) {
+                      navigator.pop();
                       _reload();
                     }
                   } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    if (dialogContext.mounted) messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
                   }
                 },
                 child: const Text('GUARDAR'),
@@ -441,7 +459,16 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       future: _walletFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red, fontSize: 12)));
+          //return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red, fontSize: 12)));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            showAppToast(
+              context,
+              'Error de conexión al cargar el saldo. Por favor intente nuevamente en unos instantes.',
+              type: AppToastType.error,
+              duration: 5,
+            );
+          });
         }
 
         final data = snapshot.data ?? {};
@@ -475,6 +502,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
               const SizedBox(height: 4),
               Text(
                 'Bs ${balance.toStringAsFixed(2)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
@@ -486,9 +515,16 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Saldo App', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        const Text(
+                          'Saldo App',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
                         Text(
                           'Bs ${appBalance.toStringAsFixed(2)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -500,9 +536,16 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Saldo Tarjetas', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        const Text(
+                          'Saldo Tarjetas',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
                         Text(
                           'Bs ${physicalBalance.toStringAsFixed(2)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -541,6 +584,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                     child: Center(
                       child: Text(
                         '${amt.toInt()}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black87),
                       ),
                     ),
@@ -559,7 +604,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       onChanged: (v) => setState(() => selectedAmount = double.tryParse(v) ?? 0),
       decoration: InputDecoration(
         prefixText: 'Bs ',
-        labelText: 'Otro Monto',
+        labelText: 'Monto',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
         fillColor: Colors.grey.shade50,
@@ -572,7 +617,16 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       future: _txFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return SliverToBoxAdapter(child: Center(child: Text('Fallo al cargar movimientos: ${snapshot.error}')));
+          //return SliverToBoxAdapter(child: Center(child: Text('Fallo al cargar movimientos: ${snapshot.error}')));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            showAppToast(
+              context,
+              'Error de conexión al cargar movimientos. Por favor intente nuevamente en unos instantes.',
+              type: AppToastType.error,
+              duration: 5,
+            );
+          });
         }
         if (snapshot.connectionState == ConnectionState.waiting && !_isRefreshing) {
           return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
@@ -671,8 +725,18 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       child: ExpansionTile(
         initiallyExpanded: isExpanded,
         leading: Icon(icon, color: iconColor),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
-        subtitle: Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+        title: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+        ),
+        subtitle: Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+        ),
         backgroundColor: Colors.white,
         collapsedBackgroundColor: Colors.white,
         children:
@@ -743,10 +807,17 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.orange.shade200)),
           child: ListTile(
             leading: const CircleAvatar(backgroundColor: Colors.orange, child: Icon(Icons.timer_outlined, color: Colors.white)),
-            title: const Text('Recarga Pendiente', style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('ID: ${tx['id']}'),
+            title: const Text(
+              'Recarga Pendiente',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text('ID: ${tx['id']}', maxLines: 1, overflow: TextOverflow.ellipsis),
             trailing: Text(
               'Bs ${amount.toStringAsFixed(2)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.orange),
             ),
           ),
@@ -774,28 +845,38 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             ),
             title: Text(
               tx['description']?.toString() ?? 'Recarga de Saldo',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             subtitle: Text(
               '${date.day}/${date.month} ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Bs ${amount.toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.green),
-                ),
-                if (invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http')) ...[
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.visibility, color: Color(0xFF0076D6), size: 20),
-                    onPressed: () => launchUrl(Uri.parse(invoiceUrl), mode: LaunchMode.externalApplication),
-                    tooltip: 'Ver Factura',
+            trailing: SizedBox(
+              width: invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http') ? 120 : 76,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Bs ${amount.toStringAsFixed(2)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.green),
+                    ),
                   ),
+                  if (invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http'))
+                    IconButton(
+                      icon: const Icon(Icons.visibility, color: Color(0xFF0076D6), size: 20),
+                      onPressed: () => launchUrl(Uri.parse(invoiceUrl), mode: LaunchMode.externalApplication),
+                      tooltip: 'Ver Factura',
+                    ),
                 ],
-              ],
+              ),
             ),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
@@ -823,28 +904,38 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             ),
             title: Text(
               tx['description']?.toString() ?? 'Consumo de Energía',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             subtitle: Text(
               '${date.day}/${date.month} ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Bs ${amount.toStringAsFixed(2)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.red),
-                ),
-                if (invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http')) ...[
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.visibility, color: Color(0xFF0076D6), size: 20),
-                    onPressed: () => launchUrl(Uri.parse(invoiceUrl), mode: LaunchMode.externalApplication),
-                    tooltip: 'Ver Factura',
+            trailing: SizedBox(
+              width: invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http') ? 120 : 76,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Bs ${amount.toStringAsFixed(2)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.red),
+                    ),
                   ),
+                  if (invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http'))
+                    IconButton(
+                      icon: const Icon(Icons.visibility, color: Color(0xFF0076D6), size: 20),
+                      onPressed: () => launchUrl(Uri.parse(invoiceUrl), mode: LaunchMode.externalApplication),
+                      tooltip: 'Ver Factura',
+                    ),
                 ],
-              ],
+              ),
             ),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),

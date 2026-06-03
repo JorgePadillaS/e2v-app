@@ -30,10 +30,12 @@ class _QrScanPageState extends State<QrScanPage> {
     int? conn;
 
     for (final part in up.split(RegExp(r'[;|,\s]+'))) {
-      if (part.startsWith('CP=') || part.startsWith('CB='))
+      if (part.startsWith('CP=') || part.startsWith('CB=')) {
         cb = part.split('=').last;
-      if (part.startsWith('CONNECTOR=') || part.startsWith('CONN='))
+      }
+      if (part.startsWith('CONNECTOR=') || part.startsWith('CONN=')) {
         conn = int.tryParse(part.split('=').last);
+      }
     }
 
     return {'charge_box_id': cb, 'connector_id': conn};
@@ -75,33 +77,30 @@ class _QrScanPageState extends State<QrScanPage> {
       body:
           isManual
               ? SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text('Pega el contenido del QR del cargador.'),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: ctrl,
-                        minLines: 2,
-                        maxLines: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'Contenido QR',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton.icon(
-                        onPressed: () {
-                          final parsed = _parse(ctrl.text.trim());
-                          Navigator.pop(context, parsed);
-                        },
-                        icon: const Icon(Icons.qr_code_2),
-                        label: const Text('Procesar QR'),
-                      ),
-                    ],
-                  ),
-                )
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('Pega el contenido del QR del cargador.'),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: ctrl,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(labelText: 'Contenido QR', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: () {
+                        final parsed = _parse(ctrl.text.trim());
+                        Navigator.pop(context, parsed);
+                      },
+                      icon: const Icon(Icons.qr_code_2),
+                      label: const Text('Procesar QR'),
+                    ),
+                  ],
+                ),
+              )
               : Stack(
                 children: [
                   MobileScanner(onDetect: _onDetect),

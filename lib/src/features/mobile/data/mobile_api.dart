@@ -74,8 +74,12 @@ class MobileApi {
   }
 
   Future<Map<String, dynamic>> libelulaStatus(int transactionId) async {
-    final res = await _dio.get('wallet/libelula/status/$transactionId');
-    return Map<String, dynamic>.from(res.data as Map);
+    try {
+      final res = await _dio.get('wallet/libelula/status/$transactionId');
+      return Map<String, dynamic>.from(res.data as Map);
+    } on DioException catch (_) {
+      return Map<String, dynamic>.from({});
+    }
   }
 
   Future<Map<String, dynamic>> deletePendingLibelula(int transactionId) async {
@@ -84,8 +88,12 @@ class MobileApi {
   }
 
   Future<Map<String, dynamic>> sessions() async {
-    final res = await _dio.get('sessions');
-    return Map<String, dynamic>.from(res.data as Map);
+    try {
+      final res = await _dio.get('sessions');
+      return Map<String, dynamic>.from(res.data as Map);
+    } on Exception catch (_) {
+      return Map<String, dynamic>.from({});
+    }
   }
 
   Future<Map<String, dynamic>> startStation(int stationId, {int? connectorId, int? vehicleId}) async {
