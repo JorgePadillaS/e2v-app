@@ -217,6 +217,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
       // Handle message click when app is in background/terminated
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        if (!mounted) return;
         Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsPage(api: api)));
       });
     }

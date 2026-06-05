@@ -98,7 +98,7 @@ class _StationsPageState extends ConsumerState<StationsPage> {
                 },
                 onStart: (stationId, chargeBoxId, connectorId) async {
                   final vehicleResult = await VehicleSelectorSheet.show(context, ref);
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   if (vehicleResult == null) {
                     return; // User cancelled
                   }
@@ -115,6 +115,7 @@ class _StationsPageState extends ConsumerState<StationsPage> {
                     );
                     messenger.showSnackBar(SnackBar(content: Text(res['message']?.toString() ?? 'Iniciando carga...')));
                   } on DioException catch (e) {
+                    if (!context.mounted) return;
                     final data = e.response?.data;
                     if (data is Map && data['status'] == 'vehicle_required') {
                       _showVehicleRequiredDialog(context, data['message'] ?? 'Se requiere registrar un vehículo.');
@@ -130,9 +131,12 @@ class _StationsPageState extends ConsumerState<StationsPage> {
                     final errorMsg = data?['message'] ?? e.message ?? e.toString();
                     messenger.showSnackBar(SnackBar(content: Text(errorMsg), backgroundColor: Colors.red));
                   } catch (e) {
+                    if (!context.mounted) return;
                     messenger.showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
                   } finally {
-                    setState(() => _isProcessing = false);
+                    if (mounted) {
+                      setState(() => _isProcessing = false);
+                    }
                   }
                 },
                 onStop: (stationId) async {

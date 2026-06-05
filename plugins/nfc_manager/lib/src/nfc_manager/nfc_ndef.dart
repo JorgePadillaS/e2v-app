@@ -84,8 +84,8 @@ class NdefMessage {
 
 /// The class represents the immutable NDEF record.
 class NdefRecord {
-  /// URI_PREFIX_LIST
-  static const URI_PREFIX_LIST = [
+  /// uriPrefixList
+  static const uriPrefixList = [
     '',
     'http://www.',
     'https://www.',
@@ -203,7 +203,7 @@ class NdefRecord {
     if (uriString.isEmpty) throw ('uri is empty');
 
     int prefixIndex =
-        URI_PREFIX_LIST.indexWhere((e) => uriString.startsWith(e), 1);
+        uriPrefixList.indexWhere((e) => uriString.startsWith(e), 1);
     if (prefixIndex < 0) prefixIndex = 0;
 
     return NdefRecord(
@@ -213,7 +213,7 @@ class NdefRecord {
         payload: Uint8List.fromList(
           [prefixIndex] +
               utf8.encode(
-                  uriString.substring(URI_PREFIX_LIST[prefixIndex].length)),
+                  uriString.substring(uriPrefixList[prefixIndex].length)),
         ));
   }
 

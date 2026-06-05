@@ -560,7 +560,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     );
   }
 
-  Widget _buildQuickAmounts(ThemeData theme) {
+  /* Widget _buildQuickAmounts(ThemeData theme) {
     return Row(
       children:
           quickAmounts.map((amt) {
@@ -595,7 +595,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             );
           }).toList(),
     );
-  }
+  } */
 
   Widget _buildManualAmountField(ThemeData theme) {
     return TextField(

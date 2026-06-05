@@ -7,7 +7,7 @@
 	<key>REVERSED_CLIENT_ID</key>
 	<string>com.googleusercontent.apps.318186059918-tef03r3jbh5f4bk4vbboi6c97pi4vt34</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>318186059918-abno72u58ivmhq902e67pnofoj0dic59.apps.googleusercontent.com</string>
+	<string>318186059918-6he6b1mvo4eof3nc4a66fs8g76nt32dj.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyD2pZulC12myNzAFFU23hjekdWVUeUq8yc</string>
 	<key>GCM_SENDER_ID</key>
@@ -32,5 +32,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:318186059918:ios:a8e52afd3ddcdf11b931df</string>
+	<key>DATABASE_URL</key>
+	<string>https://electropoint-8c3d1-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>

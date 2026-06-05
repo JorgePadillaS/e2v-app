@@ -1,15 +1,10 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 class AppConfig {
-  static const String _defaultApiBaseUrl = ''; //'https://e2v.evbol.com/api/v1/mobile/';
-  static const String _defaultWsHost = ''; //'e2v.evbol.com';
-  static const String _defaultReverbKey = ''; //'1d2afbx4y8f4ls8dahrr';
-  static const String _defaultDisclaimerUrl = '';
-
-  static String _apiBaseUrl = _defaultApiBaseUrl;
-  static String _wsHost = _defaultWsHost;
-  static String _reverbKey = _defaultReverbKey;
-  static String _disclaimerUrl = _defaultDisclaimerUrl;
+  static String _apiBaseUrl = 'https://e2v.evbol.com/api/v1/mobile/';
+  static String _wsHost = 'e2v.evbol.com';
+  static String _reverbKey = '1d2afbx4y8f4ls8dahrr';
+  static String _disclaimerUrl = 'https://www.e2v.bo/disclaimer/';
 
   static String get apiBaseUrl => _apiBaseUrl;
   static String get wsHost => _wsHost;
@@ -20,10 +15,10 @@ class AppConfig {
     final remoteConfig = FirebaseRemoteConfig.instance;
 
     await remoteConfig.setDefaults({
-      'apiBaseUrl': _defaultApiBaseUrl,
-      'wsHost': _defaultWsHost,
-      'reverbKey': _defaultReverbKey,
-      'disclaimerUrl': _defaultDisclaimerUrl,
+      'apiBaseUrl': _apiBaseUrl,
+      'wsHost': _wsHost,
+      'reverbKey': _reverbKey,
+      'disclaimerUrl': _disclaimerUrl,
     });
 
     await remoteConfig.setConfigSettings(
@@ -36,10 +31,10 @@ class AppConfig {
       // Keep defaults when Remote Config is unavailable.
     }
 
-    _apiBaseUrl = _normalizeApiBaseUrl(_remoteString(remoteConfig, 'apiBaseUrl', fallback: _defaultApiBaseUrl));
-    _wsHost = _remoteString(remoteConfig, 'wsHost', fallback: _defaultWsHost);
-    _reverbKey = _remoteString(remoteConfig, 'reverbKey', fallback: _defaultReverbKey);
-    _disclaimerUrl = _remoteString(remoteConfig, 'disclaimerUrl', fallback: _defaultDisclaimerUrl);
+    _apiBaseUrl = _normalizeApiBaseUrl(_remoteString(remoteConfig, 'apiBaseUrl', fallback: _apiBaseUrl));
+    _wsHost = _remoteString(remoteConfig, 'wsHost', fallback: _wsHost);
+    _reverbKey = _remoteString(remoteConfig, 'reverbKey', fallback: _reverbKey);
+    _disclaimerUrl = _remoteString(remoteConfig, 'disclaimerUrl', fallback: _disclaimerUrl);
   }
 
   static String _remoteString(FirebaseRemoteConfig remoteConfig, String primaryKey, {required String fallback}) {
