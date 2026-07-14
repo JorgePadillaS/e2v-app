@@ -1,15 +1,12 @@
-import 'package:e2v_app/src/core/config/branding_api.dart';
-import 'package:e2v_app/src/core/config/branding_config.dart';
-import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
+import 'branding_api.dart';
+import 'branding_config.dart';
+import '../../features/auth/application/auth_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final brandingApiProvider = Provider((ref) => BrandingApi());
 
-final brandingProvider =
-    AsyncNotifierProvider<BrandingNotifier, BrandingConfig>(
-      () => BrandingNotifier(),
-    );
+final brandingProvider = AsyncNotifierProvider<BrandingNotifier, BrandingConfig>(() => BrandingNotifier());
 
 class BrandingNotifier extends AsyncNotifier<BrandingConfig> {
   @override

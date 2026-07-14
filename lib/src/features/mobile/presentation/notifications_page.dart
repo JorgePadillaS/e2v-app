@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
-import 'package:e2v_app/src/features/mobile/application/notification_notifier.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import '../application/notification_notifier.dart';
+import '../data/mobile_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,9 +18,7 @@ class NotificationsPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all),
-            onPressed:
-                () =>
-                    ref.read(notificationProvider.notifier).markAllAsRead(api),
+            onPressed: () => ref.read(notificationProvider.notifier).markAllAsRead(api),
             tooltip: 'Marcar todas como leídas',
           ),
         ],
@@ -32,10 +30,7 @@ class NotificationsPage extends ConsumerWidget {
             return const Center(child: Text('No tienes notificaciones'));
           }
           return RefreshIndicator(
-            onRefresh:
-                () => ref
-                    .read(notificationProvider.notifier)
-                    .fetchNotifications(api),
+            onRefresh: () => ref.read(notificationProvider.notifier).fetchNotifications(api),
             child: ListView.builder(
               itemCount: notifications.length,
               itemBuilder: (context, index) {
@@ -45,8 +40,7 @@ class NotificationsPage extends ConsumerWidget {
 
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor:
-                        isRead ? Colors.grey : Theme.of(context).primaryColor,
+                    backgroundColor: isRead ? Colors.grey : Theme.of(context).primaryColor,
                     child: const Icon(Icons.notifications, color: Colors.white),
                   ),
                   title: Text(notificationData['title'] ?? 'Aviso'),
@@ -63,19 +57,10 @@ class NotificationsPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  trailing:
-                      !isRead
-                          ? const Icon(
-                            Icons.circle,
-                            size: 12,
-                            color: Colors.blue,
-                          )
-                          : null,
+                  trailing: !isRead ? const Icon(Icons.circle, size: 12, color: Colors.blue) : null,
                   onTap: () {
                     if (!isRead) {
-                      ref
-                          .read(notificationProvider.notifier)
-                          .markAsRead(api, item['id']);
+                      ref.read(notificationProvider.notifier).markAsRead(api, item['id']);
                     }
                   },
                 );

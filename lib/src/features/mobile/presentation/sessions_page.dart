@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import '../data/mobile_api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:e2v_app/src/features/mobile/application/active_session_notifier.dart';
+import '../application/active_session_notifier.dart';
 
 class SessionsPage extends ConsumerStatefulWidget {
   const SessionsPage({super.key, required this.api});

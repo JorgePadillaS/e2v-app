@@ -1,5 +1,5 @@
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
-import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
+import '../data/mobile_api.dart';
+import '../../auth/application/auth_controller.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';

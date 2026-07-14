@@ -1,4 +1,4 @@
-package bo.e2v.electropoint
+package bo.e2v.chargestation
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -7,7 +7,7 @@ import android.content.Context
 import androidx.annotation.NonNull
 
 class MainActivity: FlutterActivity() {
-    private val CHANNEL = "bo.e2v.electropoint/nfc"
+    private val CHANNEL = "bo.e2v.chargestation/nfc"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

@@ -1,10 +1,10 @@
-import 'package:e2v_app/src/features/auth/presentation/auth_gate.dart';
-import 'package:e2v_app/src/core/config/branding_config.dart';
+import 'features/auth/presentation/auth_gate.dart';
+import 'core/config/branding_config.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:e2v_app/src/core/config/branding_provider.dart';
+import 'core/config/branding_provider.dart';
 
 class E2VApp extends ConsumerWidget {
   const E2VApp({super.key});

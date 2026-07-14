@@ -1,19 +1,19 @@
-import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
-import 'package:e2v_app/src/features/mobile/application/active_session_notifier.dart';
-import 'package:e2v_app/src/features/mobile/application/wallet_refresh_provider.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
-import 'package:e2v_app/src/features/mobile/presentation/nfc_page.dart';
-import 'package:e2v_app/src/features/mobile/presentation/sessions_page.dart';
-import 'package:e2v_app/src/features/mobile/presentation/map/screens/charging_map_screen.dart';
-import 'package:e2v_app/src/features/mobile/presentation/wallet_page.dart';
-import 'package:e2v_app/src/features/auth/presentation/profile_screen.dart';
-import 'package:e2v_app/src/features/mobile/application/notification_notifier.dart';
-import 'package:e2v_app/src/features/mobile/presentation/notifications_page.dart';
+import '../../../features/auth/application/auth_controller.dart';
+import '../../../features/mobile/application/active_session_notifier.dart';
+import '../../../features/mobile/application/wallet_refresh_provider.dart';
+import '../../../features/mobile/data/mobile_api.dart';
+import '../../../features/mobile/presentation/nfc_page.dart';
+import '../../../features/mobile/presentation/sessions_page.dart';
+import '../../../features/mobile/presentation/map/screens/charging_map_screen.dart';
+import '../../../features/mobile/presentation/wallet_page.dart';
+import '../../../features/auth/presentation/profile_screen.dart';
+import '../../../features/mobile/application/notification_notifier.dart';
+import '../../../features/mobile/presentation/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:e2v_app/src/core/config/branding_provider.dart';
+import '../../../core/config/branding_provider.dart';
 import 'package:dio/dio.dart';
 
 class HomePage extends ConsumerStatefulWidget {

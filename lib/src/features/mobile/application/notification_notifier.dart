@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import '../data/mobile_api.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final notificationProvider = StateNotifierProvider<

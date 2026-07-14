@@ -1,17 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:e2v_app/src/features/auth/data/auth_api.dart';
-import 'package:e2v_app/src/features/auth/data/token_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../data/auth_api.dart';
+import '../data/token_store.dart';
 
 final authApiProvider = Provider((ref) => AuthApi());
 final tokenStoreProvider = Provider((ref) => TokenStore());
 
-final authControllerProvider =
-    StateNotifierProvider<AuthController, AsyncValue<Map<String, dynamic>?>>(
-      (ref) => AuthController(ref),
-    );
+final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<Map<String, dynamic>?>>(
+  (ref) => AuthController(ref),
+);
 
 class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   AuthController(this.ref) : super(const AsyncValue.loading()) {
@@ -24,7 +23,7 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
     if (e is DioException) {
       if (e.response?.data is Map) {
         final data = e.response!.data as Map;
-        
+
         // Handle Laravel validation errors (errors object)
         if (data['errors'] != null && data['errors'] is Map) {
           final errors = data['errors'] as Map;
@@ -36,22 +35,21 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
             return firstError.toString();
           }
         }
-        
+
         // Handle generic message from backend
         if (data['message'] != null) {
           return data['message'].toString();
         }
       }
-      
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
+
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
         return 'Tiempo de espera agotado. Verifica tu conexión.';
       }
-      
+
       if (e.type == DioExceptionType.connectionError) {
         return 'No se pudo conectar al servidor. Inténtalo más tarde.';
       }
-      
+
       return 'Error de conexión al servidor (${e.response?.statusCode ?? '??'}).';
     }
     return 'Ocurrió un error inesperado. Inténtalo de nuevo.';
@@ -59,10 +57,10 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
 
   Future<void> bootstrap() async {
     try {
-      final token = await ref.read(tokenStoreProvider).read().timeout(
-        const Duration(seconds: 4),
-        onTimeout: () => throw 'Token read timeout',
-      );
+      final token = await ref
+          .read(tokenStoreProvider)
+          .read()
+          .timeout(const Duration(seconds: 4), onTimeout: () => throw 'Token read timeout');
 
       if (token == null) {
         state = const AsyncValue.data(null);
@@ -84,9 +82,7 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   Future<void> login({required String email, required String password}) async {
     state = const AsyncValue.loading();
     try {
-      final res = await ref
-          .read(authApiProvider)
-          .login(email: email, password: password);
+      final res = await ref.read(authApiProvider).login(email: email, password: password);
       final token = res['token'] as String;
       await ref.read(tokenStoreProvider).save(token);
       final profile = await ref.read(authApiProvider).profile(token);
@@ -111,10 +107,7 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
       final idToken = auth.idToken;
 
       if (idToken == null) {
-        state = AsyncValue.error(
-          'No se pudo obtener el token de Google',
-          StackTrace.current,
-        );
+        state = AsyncValue.error('No se pudo obtener el token de Google', StackTrace.current);
         return;
       }
 
@@ -139,15 +132,17 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      final res = await ref.read(authApiProvider).register(
-        name: name,
-        email: email,
-        password: password,
-        billingDocument: billingDocument,
-        billingDocType: billingDocType,
-        billingRazonSocial: billingRazonSocial,
-        nfcId: nfcId,
-      );
+      final res = await ref
+          .read(authApiProvider)
+          .register(
+            name: name,
+            email: email,
+            password: password,
+            billingDocument: billingDocument,
+            billingDocType: billingDocType,
+            billingRazonSocial: billingRazonSocial,
+            nfcId: nfcId,
+          );
       final token = res['token'] as String;
       await ref.read(tokenStoreProvider).save(token);
       final profile = await ref.read(authApiProvider).profile(token);
@@ -223,12 +218,9 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
     required String passwordConfirmation,
   }) async {
     try {
-      return await ref.read(authApiProvider).resetPassword(
-        email: email,
-        code: code,
-        password: password,
-        passwordConfirmation: passwordConfirmation,
-      );
+      return await ref
+          .read(authApiProvider)
+          .resetPassword(email: email, code: code, password: password, passwordConfirmation: passwordConfirmation);
     } catch (e) {
       throw _parseError(e);
     }

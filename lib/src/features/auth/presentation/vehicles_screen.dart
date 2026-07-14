@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:e2v_app/src/core/ui/app_toast.dart';
-import 'package:e2v_app/src/core/config/branding_provider.dart';
-import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import '../../../core/ui/app_toast.dart';
+import '../../../core/config/branding_provider.dart';
+import '../application/auth_controller.dart';
+import '../../mobile/data/mobile_api.dart';
 
 class VehiclesScreen extends ConsumerStatefulWidget {
   const VehiclesScreen({super.key});

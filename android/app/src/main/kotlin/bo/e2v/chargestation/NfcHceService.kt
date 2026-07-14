@@ -1,4 +1,4 @@
-package bo.e2v.electropoint
+package bo.e2v.chargestation
 
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle

@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:e2v_app/src/core/ui/app_toast.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import '../../../core/ui/app_toast.dart';
+import '../data/mobile_api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:e2v_app/src/features/mobile/application/wallet_refresh_provider.dart';
+import '../application/wallet_refresh_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:e2v_app/src/features/auth/presentation/profile_screen.dart';
+import '../../auth/presentation/profile_screen.dart';
 
 class WalletPage extends ConsumerStatefulWidget {
   const WalletPage({super.key, required this.api, this.displayName});

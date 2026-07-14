@@ -1,28 +1,19 @@
 import 'package:dio/dio.dart';
-import 'package:e2v_app/src/core/config/app_config.dart';
-import 'package:e2v_app/src/core/config/branding_config.dart';
+import 'app_config.dart';
+import 'branding_config.dart';
 
 class BrandingApi {
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
     ),
   );
 
   Future<BrandingConfig> getConfig(String? token) async {
-    final res = await _dio.get(
-      'config',
-      options:
-          token != null
-              ? Options(headers: {'Authorization': 'Bearer $token'})
-              : null,
-    );
+    final res = await _dio.get('config', options: token != null ? Options(headers: {'Authorization': 'Bearer $token'}) : null);
     return BrandingConfig.fromJson(res.data as Map<String, dynamic>);
   }
 

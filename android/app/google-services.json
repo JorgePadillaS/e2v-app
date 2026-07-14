@@ -8,6 +8,59 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:318186059918:android:9591478682c6c2a0b931df",
+        "android_client_info": {
+          "package_name": "bo.e2v.chargestation"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "318186059918-2lellmhcb7er8mjt7jg7qf8v1siid4a4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "bo.e2v.chargestation",
+            "certificate_hash": "ae8b09d5b2d5d67c93d6e75d6d9223242752d8f4"
+          }
+        },
+        {
+          "client_id": "318186059918-3i2lg9mo2bq386vm07cuekt6vls478jo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "bo.e2v.chargestation",
+            "certificate_hash": "2d6f7058acf655a04a055f95867855eb34d43d68"
+          }
+        },
+        {
+          "client_id": "318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvxl7qstnVwvt2IU1G6s-Nz4URhwhx410"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "318186059918-tef03r3jbh5f4bk4vbboi6c97pi4vt34.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "bo.e2v.electropoint",
+                "app_store_id": "6769938013"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:318186059918:android:a7f67a6333c810c5b931df",
         "android_client_info": {
           "package_name": "bo.e2v.electropoint"

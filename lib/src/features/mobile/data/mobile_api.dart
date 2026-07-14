@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:e2v_app/src/core/config/app_config.dart';
+import '../../../core/config/app_config.dart';
 
 class MobileApi {
   MobileApi(this.token)

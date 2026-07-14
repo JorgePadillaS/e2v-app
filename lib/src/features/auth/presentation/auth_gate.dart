@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
-import 'package:e2v_app/src/features/auth/presentation/home_page.dart';
-import 'package:e2v_app/src/features/auth/presentation/login_page.dart';
-import 'package:e2v_app/src/features/auth/presentation/splash_screen.dart';
-import 'package:e2v_app/src/core/services/websocket_service.dart';
-import 'package:e2v_app/src/core/config/app_config.dart';
+import '../application/auth_controller.dart';
+import 'home_page.dart';
+import 'login_page.dart';
+import 'splash_screen.dart';
+import '../../../core/services/websocket_service.dart';
+import '../../../core/config/app_config.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -20,10 +20,7 @@ class AuthGate extends ConsumerWidget {
         if (data == null || data['user'] == null) return const LoginPage();
 
         // Initialize WebSocket Service for Real-time Status
-        WebsocketService().init(
-          host: AppConfig.wsHost,
-          apiKey: AppConfig.reverbKey,
-        );
+        WebsocketService().init(host: AppConfig.wsHost, apiKey: AppConfig.reverbKey);
 
         return HomePage(data: data);
       },

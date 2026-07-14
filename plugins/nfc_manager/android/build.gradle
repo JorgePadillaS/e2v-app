@@ -29,7 +29,7 @@ android {
         namespace("io.flutter.plugins.nfcmanager")
     }
     
-    compileSdkVersion 31
+    compileSdkVersion 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

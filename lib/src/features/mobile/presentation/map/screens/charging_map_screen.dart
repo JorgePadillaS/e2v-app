@@ -4,9 +4,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
-import 'package:e2v_app/src/features/mobile/application/stations_notifier.dart';
-import 'package:e2v_app/src/features/mobile/presentation/map/widgets/station_info_card.dart';
+import '../../../data/mobile_api.dart';
+import '../../../application/stations_notifier.dart';
+import '../widgets/station_info_card.dart';
 
 class ChargingMapScreen extends ConsumerStatefulWidget {
   const ChargingMapScreen({super.key, required this.api});
@@ -40,6 +40,29 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+      if (!mounted) return;
+      bool? granted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Permiso de Ubicación'),
+          content: const Text(
+            'E2V recopila y utiliza tu ubicación para mostrarte en el mapa las estaciones de carga más cercanas a ti mientras usas la aplicación.\n\n¿Deseas permitir el acceso a tu ubicación?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No permitir'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Permitir'),
+            ),
+          ],
+        ),
+      );
+
+      if (granted != true) return;
+
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) return;
     }

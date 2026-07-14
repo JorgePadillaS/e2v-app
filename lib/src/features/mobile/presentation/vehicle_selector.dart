@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:e2v_app/src/core/config/branding_provider.dart';
-import 'package:e2v_app/src/features/auth/application/auth_controller.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
-import 'package:e2v_app/src/features/auth/presentation/vehicles_screen.dart';
+import '../../../core/config/branding_provider.dart';
+import '../../auth/application/auth_controller.dart';
+import '../data/mobile_api.dart';
+import '../../auth/presentation/vehicles_screen.dart';
 
 class VehicleSelectorSheet extends ConsumerStatefulWidget {
   const VehicleSelectorSheet({super.key});
@@ -171,10 +171,7 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF333333)),
                                         ),
                                       ),
-                                      Radio<int?>(
-                                        value: null,
-                                        activeColor: primaryColor,
-                                      ),
+                                      Radio<int?>(value: null, activeColor: primaryColor),
                                     ],
                                   ),
                                 ),
@@ -256,10 +253,7 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                                         ],
                                       ),
                                     ),
-                                    Radio<int?>(
-                                      value: id,
-                                      activeColor: primaryColor,
-                                    ),
+                                    Radio<int?>(value: id, activeColor: primaryColor),
                                   ],
                                 ),
                               ),

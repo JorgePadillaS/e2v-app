@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:e2v_app/src/features/mobile/application/map_service.dart';
+import '../../../application/map_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';

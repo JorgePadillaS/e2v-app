@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
-import 'package:e2v_app/src/features/mobile/application/stations_notifier.dart';
-import 'package:e2v_app/src/features/mobile/application/map_service.dart';
-import 'package:e2v_app/src/features/mobile/presentation/vehicle_selector.dart';
-import 'package:e2v_app/src/features/auth/presentation/vehicles_screen.dart';
-import 'package:e2v_app/src/features/auth/presentation/profile_screen.dart';
+import '../data/mobile_api.dart';
+import '../application/stations_notifier.dart';
+import '../application/map_service.dart';
+import 'vehicle_selector.dart';
+import '../../auth/presentation/vehicles_screen.dart';
+import '../../auth/presentation/profile_screen.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class StationsPage extends ConsumerStatefulWidget {
