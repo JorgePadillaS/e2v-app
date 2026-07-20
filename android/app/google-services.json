@@ -31,6 +31,14 @@
           }
         },
         {
+          "client_id": "318186059918-t56gf3hod2eprp4t5fpi1avc30e5sr5u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "bo.e2v.chargestation",
+            "certificate_hash": "86517e5eb176094293cac96b66321bfb623b3e45"
+          }
+        },
+        {
           "client_id": "318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com",
           "client_type": 3
         }

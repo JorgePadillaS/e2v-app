@@ -5,6 +5,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../data/auth_api.dart';
 import '../data/token_store.dart';
 
+const _googleServerClientId = '318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com';
+
 final authApiProvider = Provider((ref) => AuthApi());
 final tokenStoreProvider = Provider((ref) => TokenStore());
 
@@ -95,7 +97,7 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   Future<void> loginWithGoogle() async {
     state = const AsyncValue.loading();
     try {
-      final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+      final googleSignIn = GoogleSignIn(scopes: ['email', 'profile'], serverClientId: _googleServerClientId);
 
       final account = await googleSignIn.signIn();
       if (account == null) {

@@ -1,13 +1,13 @@
 import '../data/mobile_api.dart';
 import '../../auth/application/auth_controller.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 final stationsProvider = StateNotifierProvider<StationsNotifier, AsyncValue<List<Map<String, dynamic>>>>((ref) {
   final authState = ref.watch(authControllerProvider);
-  final token = authState.value?['token'] as String?;
+  final token = authState.asData?.value?['token'] as String?;
 
   if (token == null) {
     return StationsNotifier(null, ref);
@@ -26,7 +26,7 @@ class StationsNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic
 
   final MobileApi? _api;
   final Ref ref;
-  StreamSubscription<DatabaseEvent>? _firebaseSubscription;
+  StreamSubscription<QuerySnapshot>? _firebaseSubscription;
 
   @override
   void dispose() {
@@ -69,65 +69,76 @@ class StationsNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic
   }
 
   void _initRealtime() {
-    final dbRef = FirebaseDatabase.instance.ref('stations'); // Correct path
-    _firebaseSubscription = dbRef.onValue.listen((event) {
-      final data = event.snapshot.value as Map?;
-      if (data == null) return;
+    final dbRef = FirebaseFirestore.instance.collection('stations');
+    _firebaseSubscription = dbRef.snapshots().listen(
+      (event) {
+        final Map<String, dynamic> data = {};
+        for (var doc in event.docs) {
+          data[doc.id] = doc.data();
+        }
+        if (data.isEmpty) return;
 
-      if (state.hasValue) {
-        final currentLocations = state.value!;
-        bool updated = false;
+        if (state.hasValue) {
+          final currentLocations = state.value!;
+          bool updated = false;
 
-        final updatedLocations =
-            currentLocations.map((loc) {
-              Map<String, dynamic> updatedLoc = Map<String, dynamic>.from(loc);
-              final stations = (updatedLoc['stations'] as List? ?? []);
+          final updatedLocations =
+              currentLocations.map((loc) {
+                Map<String, dynamic> updatedLoc = Map<String, dynamic>.from(loc);
+                final stations = (updatedLoc['stations'] as List? ?? []);
 
-              bool locUpdated = false;
-              final updatedStations =
-                  stations.map((s) {
-                    Map<String, dynamic> stationMap = Map<String, dynamic>.from(s as Map);
-                    final chargeBoxId = stationMap['charge_box_id']?.toString();
+                bool locUpdated = false;
+                final updatedStations =
+                    stations.map((s) {
+                      Map<String, dynamic> stationMap = Map<String, dynamic>.from(s as Map);
+                      final chargeBoxId = stationMap['charge_box_id']?.toString();
 
-                    if (chargeBoxId != null && data.containsKey(chargeBoxId)) {
-                      final stationData = data[chargeBoxId] as Map?;
-                      if (stationData != null) {
-                        final connectorsUpdate = stationData['connectors'] as Map?;
-                        if (connectorsUpdate != null) {
-                          final connectors = List<Map<String, dynamic>>.from(
-                            (stationMap['connectors'] as List? ?? []).map((c) => Map<String, dynamic>.from(c as Map)),
-                          );
+                      if (chargeBoxId != null && data.containsKey(chargeBoxId)) {
+                        final stationData = data[chargeBoxId] as Map?;
+                        if (stationData != null) {
+                          final connectorsUpdate = stationData['connectors'] as Map?;
+                          if (connectorsUpdate != null) {
+                            final connectors = List<Map<String, dynamic>>.from(
+                              (stationMap['connectors'] as List? ?? []).map((c) => Map<String, dynamic>.from(c as Map)),
+                            );
 
-                          for (var connector in connectors) {
-                            final conId = connector['connector_id']?.toString();
-                            if (conId != null && connectorsUpdate.containsKey(conId)) {
-                              final conData = connectorsUpdate[conId] as Map?;
-                              final conStatus = conData?['status']?.toString().toUpperCase();
-                              if (conStatus != null && connector['status'] != conStatus) {
-                                connector['status'] = conStatus;
-                                locUpdated = true;
-                                updated = true;
-                                debugPrint("Real-time update: Station $chargeBoxId, Connector $conId -> $conStatus");
+                            for (var connector in connectors) {
+                              final conId = connector['connector_id']?.toString();
+                              if (conId != null && connectorsUpdate.containsKey(conId)) {
+                                final conData = connectorsUpdate[conId] as Map?;
+                                final conStatus = conData?['status']?.toString().toUpperCase();
+                                if (conStatus != null && connector['status'] != conStatus) {
+                                  connector['status'] = conStatus;
+                                  locUpdated = true;
+                                  updated = true;
+                                  debugPrint("Real-time update: Station $chargeBoxId, Connector $conId -> $conStatus");
+                                }
                               }
                             }
+                            stationMap['connectors'] = connectors;
                           }
-                          stationMap['connectors'] = connectors;
                         }
                       }
-                    }
-                    return stationMap;
-                  }).toList();
+                      return stationMap;
+                    }).toList();
 
-              if (locUpdated) {
-                updatedLoc['stations'] = updatedStations;
-              }
-              return updatedLoc;
-            }).toList();
+                if (locUpdated) {
+                  updatedLoc['stations'] = updatedStations;
+                }
+                return updatedLoc;
+              }).toList();
 
-        if (updated) {
-          state = AsyncValue.data(updatedLocations);
+          if (updated) {
+            state = AsyncValue.data(updatedLocations);
+          }
         }
-      }
-    });
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        // Realtime status is an enhancement over the station list loaded from
+        // the API. Keep that data usable when Firebase rules or connectivity
+        // reject the listener instead of surfacing an unhandled stream error.
+        debugPrint('Station realtime updates unavailable: $error');
+      },
+    );
   }
 }

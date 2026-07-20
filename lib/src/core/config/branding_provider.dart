@@ -13,7 +13,10 @@ class BrandingNotifier extends AsyncNotifier<BrandingConfig> {
   Future<BrandingConfig> build() async {
     try {
       // Watch auth state to re-fetch config if user logs in/out (token might change available promos)
-      final auth = ref.watch(authControllerProvider).value;
+      // Branding is optional. An authentication error must not be re-thrown
+      // while trying to obtain the token, otherwise it is reported as a
+      // misleading branding failure.
+      final auth = ref.watch(authControllerProvider).asData?.value;
       final token = auth?['token'] as String?;
 
       return await ref.read(brandingApiProvider).getConfig(token);
@@ -28,7 +31,7 @@ class BrandingNotifier extends AsyncNotifier<BrandingConfig> {
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final auth = ref.read(authControllerProvider).value;
+      final auth = ref.read(authControllerProvider).asData?.value;
       final token = auth?['token'] as String?;
       return await ref.read(brandingApiProvider).getConfig(token);
     });
