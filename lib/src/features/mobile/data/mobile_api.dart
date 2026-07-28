@@ -59,6 +59,7 @@ class MobileApi {
     String? documento,
     String? complemento,
     String? docType,
+    String? plate,
   }) async {
     final res = await _dio.post(
       'wallet/libelula/checkout',
@@ -68,6 +69,7 @@ class MobileApi {
         if (documento != null) 'documento': documento,
         if (complemento != null) 'complemento': complemento,
         if (docType != null) 'doc_type': docType,
+        if (plate != null) 'plate': plate,
       },
     );
     return Map<String, dynamic>.from(res.data as Map);

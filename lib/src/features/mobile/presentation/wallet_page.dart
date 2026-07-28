@@ -9,6 +9,7 @@ import '../application/wallet_refresh_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../auth/presentation/profile_screen.dart';
+import '../../auth/presentation/vehicles_screen.dart';
 
 class WalletPage extends ConsumerStatefulWidget {
   const WalletPage({super.key, required this.api, this.displayName});
@@ -137,7 +138,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                 Text('¡Recarga Exitosa!'),
               ],
             ),
-            content: Text('Se han acreditado Bs ${amount.toStringAsFixed(2)} a tu billetera.', textAlign: TextAlign.center),
+            content: Text('Se han acreditado Bs ${amount.toStringAsFixed(2)} a tu saldo.', textAlign: TextAlign.center),
             actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('ENTENDIDO'))],
           ),
     );
@@ -189,11 +190,105 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       showAppToast(context, 'Monto mínimo Bs 1.00', type: AppToastType.warning);
       return;
     }
+    
+    // Show loader for fetching vehicles
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    
+    List<dynamic> vehicles = [];
     try {
-      final res = await widget.api.libelulaCheckout(amount);
+      vehicles = await widget.api.getVehicles();
+      if (mounted) Navigator.pop(context); // Close loader
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loader
+        showAppToast(context, 'Error al obtener vehículos: $e', type: AppToastType.error);
+      }
+      return;
+    }
+    
+    final validVehicles = vehicles.where((v) => v['plate'] != null && v['plate'].toString().trim().isNotEmpty).toList();
+    
+    if (validVehicles.isEmpty) {
+      // Show dialog asking to register a plate
+      showDialog(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Registro de Placa Requerido'),
+          content: const Text(
+            'Para cumplir con Impuestos Nacionales, debes registrar la placa de tu vehículo antes de recargar saldo o realizar pagos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogCtx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const VehiclesScreen()),
+                );
+              },
+              child: const Text('Registrar Placa'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    
+    String? selectedPlate;
+    if (validVehicles.length == 1) {
+      selectedPlate = validVehicles.first['plate'].toString().trim();
+    } else {
+      selectedPlate = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Selecciona tu vehiculo'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: validVehicles.length,
+              itemBuilder: (context, index) {
+                final v = validVehicles[index];
+                final brand = v['brand']?.toString() ?? '';
+                final model = v['model']?.toString() ?? '';
+                final plate = v['plate']?.toString() ?? '';
+                
+                return ListTile(
+                  leading: const Icon(LucideIcons.car, color: Colors.blue),
+                  title: Text(plate, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('$brand $model'),
+                  onTap: () => Navigator.pop(dialogCtx, plate),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx, null),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    if (selectedPlate == null) return; // User cancelled
+    
+    // Show loader for checkout
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    
+    try {
+      final res = await widget.api.libelulaCheckout(amount, plate: selectedPlate);
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.pop(context); // Close loader
+      
       final txId = int.tryParse(res['transaction_id']?.toString() ?? '');
       final url = res['payment_url']?.toString() ?? '';
       if (url.isEmpty) throw Exception('No se pudo generar la URL de pago.');
@@ -202,7 +297,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       await launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView);
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.pop(context); // Close loader
       if (e is DioException) {
         final data = e.response?.data;
         if (data is Map && data['status'] == 'billing_document_required') {
@@ -251,7 +346,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverAppBar(
-                title: const Text('Billetera', style: TextStyle(fontWeight: FontWeight.bold)),
+                title: const Text('Saldo', style: TextStyle(fontWeight: FontWeight.bold)),
                 floating: true,
                 actions: [
                   IconButton(

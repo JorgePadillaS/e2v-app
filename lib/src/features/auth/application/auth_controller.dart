@@ -148,7 +148,7 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
       final token = res['token'] as String;
       await ref.read(tokenStoreProvider).save(token);
       final profile = await ref.read(authApiProvider).profile(token);
-      state = AsyncValue.data({'token': token, ...profile});
+      state = AsyncValue.data({'token': token, 'is_new_user': true, ...profile});
     } catch (e, st) {
       state = AsyncValue.error(_parseError(e), st);
     }
@@ -164,6 +164,14 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   }
 
   Future<void> logout() async {
+    try {
+      final googleSignIn = GoogleSignIn(scopes: ['email', 'profile'], serverClientId: _googleServerClientId);
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+      }
+    } catch (e) {
+      debugPrint('Google SignOut Error: $e');
+    }
     await ref.read(tokenStoreProvider).clear();
     state = const AsyncValue.data(null);
   }
@@ -196,6 +204,14 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
 
     try {
       await ref.read(authApiProvider).deleteAccount(token);
+      try {
+        final googleSignIn = GoogleSignIn(scopes: ['email', 'profile'], serverClientId: _googleServerClientId);
+        if (await googleSignIn.isSignedIn()) {
+          await googleSignIn.signOut();
+        }
+      } catch (e) {
+        debugPrint('Google SignOut Error: $e');
+      }
       await ref.read(tokenStoreProvider).clear();
       state = const AsyncValue.data(null);
     } catch (e, st) {

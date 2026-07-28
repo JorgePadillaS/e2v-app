@@ -19,7 +19,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final confirmPass = TextEditingController();
   final name = TextEditingController();
   final billingDocument = TextEditingController();
-  final billingDocType = TextEditingController(text: 'NIT');
+  final billingDocType = TextEditingController(text: 'CI');
   final billingRazonSocial = TextEditingController();
   final emailFocus = FocusNode();
   final billingDocumentFocus = FocusNode();
@@ -29,6 +29,78 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   String? emailError;
   bool isValidatingNit = false;
   String? nitError;
+
+  // New state variables for password visibility and validation errors
+  bool _obscurePass = true;
+  bool _obscureConfirmPass = true;
+  String? nameError;
+  String? passError;
+  String? confirmPassError;
+
+  void _validateName(String value) {
+    if (!registerMode) return;
+    setState(() {
+      final nameTrim = value.trim();
+      if (nameTrim.isEmpty) {
+        nameError = 'El nombre o razón social es obligatorio';
+      } else if (nameTrim.length < 2) {
+        nameError = 'Debe tener al menos 2 caracteres';
+      } else if (!RegExp(r"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s'\-\.&]+$").hasMatch(nameTrim)) {
+        nameError = 'Contiene caracteres no permitidos';
+      } else {
+        nameError = null;
+      }
+    });
+  }
+
+  void _validateEmailFormat(String value) {
+    setState(() {
+      final emailTrim = value.trim();
+      if (emailTrim.isEmpty) {
+        emailError = 'El correo electrónico es obligatorio';
+      } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailTrim)) {
+        emailError = 'Formato de correo inválido';
+      } else {
+        emailError = null;
+      }
+    });
+  }
+
+  void _validatePassword(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        passError = 'La contraseña es obligatoria';
+      } else if (value.length < 8) {
+        passError = 'Debe tener al menos 8 caracteres';
+      } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
+        passError = 'Debe incluir al menos una mayúscula';
+      } else if (!RegExp(r'[a-z]').hasMatch(value)) {
+        passError = 'Debe incluir al menos una minúscula';
+      } else if (!RegExp(r'[0-9]').hasMatch(value)) {
+        passError = 'Debe incluir al menos un número';
+      } else {
+        passError = null;
+      }
+
+      // Re-validate confirm pass if it's already filled
+      if (registerMode && confirmPass.text.isNotEmpty) {
+        _validateConfirmPassword(confirmPass.text);
+      }
+    });
+  }
+
+  void _validateConfirmPassword(String value) {
+    if (!registerMode) return;
+    setState(() {
+      if (value.isEmpty) {
+        confirmPassError = 'La confirmación es obligatoria';
+      } else if (value != pass.text) {
+        confirmPassError = 'Las contraseñas no coinciden';
+      } else {
+        confirmPassError = null;
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -349,7 +421,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         if (registerMode) ...[
                           const SizedBox(height: 16),
-                          _buildTextField(controller: name, label: 'Nombre completo', icon: LucideIcons.user),
+                          _buildTextField(
+                            controller: name,
+                            label: 'Nombre completo',
+                            icon: LucideIcons.user,
+                            errorText: nameError,
+                            onChanged: _validateName,
+                          ),
                         ],
                         const SizedBox(height: 16),
                         _buildTextField(
@@ -365,14 +443,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   : (emailError == null && email.text.contains('@')
                                       ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
                                       : null),
-                          onChanged: (val) {
-                            if (emailError != null) {
-                              setState(() => emailError = null);
-                            }
-                          },
+                          onChanged: _validateEmailFormat,
                         ),
                         const SizedBox(height: 16),
-                        _buildTextField(controller: pass, label: 'Contraseña', icon: LucideIcons.lock, obscureText: true),
+                        _buildTextField(
+                          controller: pass,
+                          label: 'Contraseña',
+                          icon: LucideIcons.lock,
+                          obscureText: _obscurePass,
+                          isPassword: true,
+                          errorText: passError,
+                          onToggleObscure: () => setState(() => _obscurePass = !_obscurePass),
+                          onChanged: _validatePassword,
+                        ),
                         if (!registerMode) ...[
                           Align(
                             alignment: Alignment.centerRight,
@@ -391,7 +474,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             controller: confirmPass,
                             label: 'Confirmar contraseña',
                             icon: LucideIcons.shieldCheck,
-                            obscureText: true,
+                            obscureText: _obscureConfirmPass,
+                            isPassword: true,
+                            errorText: confirmPassError,
+                            onToggleObscure: () => setState(() => _obscureConfirmPass = !_obscureConfirmPass),
+                            onChanged: _validateConfirmPassword,
                           ),
                           const SizedBox(height: 16),
                           Row(
@@ -401,7 +488,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 child: _buildDropdownField(
                                   value: billingDocType.text,
                                   label: 'Tipo',
-                                  items: ['NIT', 'CI'],
+                                  items: ['CI', 'NIT'],
                                   onChanged: (val) {
                                     if (val != null) {
                                       setState(() => billingDocType.text = val);
@@ -450,43 +537,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           height: 56,
                           child: FilledButton(
                             onPressed:
-                                (loading ||
-                                        (registerMode &&
-                                            (emailError != null || nitError != null || isValidatingEmail || isValidatingNit)))
+                                (loading || isValidatingEmail || isValidatingNit)
                                     ? null
                                     : () async {
                                       setState(() => localError = null);
                                       if (registerMode) {
-                                        if (name.text.trim().isEmpty) {
-                                          setState(() => localError = 'El nombre completo es obligatorio');
-                                          return;
-                                        }
-                                        if (email.text.trim().isEmpty) {
-                                          setState(() => localError = 'El correo electrónico es obligatorio');
-                                          return;
-                                        }
-                                        if (pass.text.isEmpty) {
-                                          setState(() => localError = 'La contraseña es obligatoria');
-                                          return;
-                                        }
-                                        if (pass.text != confirmPass.text) {
-                                          setState(() => localError = 'Las contraseñas no coinciden');
-                                          return;
-                                        }
+                                        _validateName(name.text);
+                                        _validateEmailFormat(email.text);
+                                        _validatePassword(pass.text);
+                                        _validateConfirmPassword(confirmPass.text);
+
                                         final docText = billingDocument.text.trim();
                                         if (docText.isEmpty) {
-                                          setState(() => localError = 'El número de documento (CI/NIT) es obligatorio');
+                                          setState(() => nitError = 'El número de documento (CI/NIT) es obligatorio');
+                                        } else {
+                                          final docRegExp = RegExp(r'^\d{5,15}$');
+                                          if (!docRegExp.hasMatch(docText)) {
+                                            setState(() => nitError = 'Debe tener entre 5 y 15 dígitos y solo números');
+                                          } else {
+                                            setState(() => nitError = null);
+                                          }
+                                        }
+
+                                        if (nameError != null || emailError != null || passError != null || confirmPassError != null || nitError != null) {
+                                          setState(() => localError = 'Por favor, corrige los errores en el formulario');
                                           return;
                                         }
-                                        final docRegExp = RegExp(r'^\d{5,15}$');
-                                        if (!docRegExp.hasMatch(docText)) {
-                                          setState(
-                                            () =>
-                                                localError =
-                                                    'El documento debe ser únicamente numérico y tener entre 5 y 15 dígitos',
-                                          );
-                                          return;
-                                        }
+
                                         await ref
                                             .read(authControllerProvider.notifier)
                                             .register(
@@ -497,36 +574,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                               billingDocType: billingDocType.text,
                                               billingRazonSocial: billingRazonSocial.text.trim(),
                                             );
-                                        if (context.mounted) {
-                                          showDialog(
-                                            context: context,
-                                            barrierDismissible: false,
-                                            builder:
-                                                (dialogContext) => AlertDialog(
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                  title: Text('¡Bienvenido, ${name.text.trim()}!'),
-                                                  content: const Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Icon(Icons.stars, color: Colors.amber, size: 60),
-                                                      SizedBox(height: 16),
-                                                      Text(
-                                                        'Tu cuenta ha sido creada exitosamente. Ya puedes empezar a disfrutar de ElectroPoint.',
-                                                        textAlign: TextAlign.center,
-                                                        style: TextStyle(fontSize: 16),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.pop(dialogContext),
-                                                      child: const Text('Comenzar'),
-                                                    ),
-                                                  ],
-                                                ),
-                                          );
-                                        }
+                                        // Welcome dialog is now handled in HomePage using the is_new_user flag
                                       } else {
+                                        _validateEmailFormat(email.text);
+                                        _validatePassword(pass.text);
+                                        if (emailError != null || passError != null) {
+                                          setState(() => localError = 'Por favor, ingresa credenciales válidas');
+                                          return;
+                                        }
                                         await ref
                                             .read(authControllerProvider.notifier)
                                             .login(email: email.text.trim(), password: pass.text);
@@ -586,9 +641,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ),
                           ),
                         ],
+
                         const SizedBox(height: 24),
                         TextButton(
-                          onPressed: () => setState(() => registerMode = !registerMode),
+                          onPressed: () => setState(() {
+                            registerMode = !registerMode;
+                            localError = null;
+                            emailError = null;
+                            nameError = null;
+                            passError = null;
+                            confirmPassError = null;
+                            nitError = null;
+                            pass.clear();
+                            confirmPass.clear();
+                          }),
                           child: Text(
                             registerMode ? '¿Ya tienes una cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí',
                             style: const TextStyle(fontWeight: FontWeight.w600),
@@ -626,6 +692,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     required String label,
     required IconData icon,
     bool obscureText = false,
+    bool isPassword = false,
+    VoidCallback? onToggleObscure,
     TextInputType? keyboardType,
     FocusNode? focusNode,
     String? errorText,
@@ -641,7 +709,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
-        suffixIcon: suffix != null ? Padding(padding: const EdgeInsets.all(12), child: suffix) : null,
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  obscureText ? LucideIcons.eyeOff : LucideIcons.eye,
+                  size: 20,
+                  color: Colors.grey.shade600,
+                ),
+                onPressed: onToggleObscure,
+              )
+            : (suffix != null ? Padding(padding: const EdgeInsets.all(12), child: suffix) : null),
         errorText: errorText,
         errorMaxLines: 2,
         errorStyle: const TextStyle(fontSize: 11, height: 1.0),

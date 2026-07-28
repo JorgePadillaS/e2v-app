@@ -7,9 +7,11 @@ import '../../../features/mobile/presentation/sessions_page.dart';
 import '../../../features/mobile/presentation/map/screens/charging_map_screen.dart';
 import '../../../features/mobile/presentation/wallet_page.dart';
 import '../../../features/auth/presentation/profile_screen.dart';
+import 'vehicles_screen.dart';
 import '../../../features/mobile/application/notification_notifier.dart';
 import '../../../features/mobile/presentation/notifications_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -28,6 +30,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   int index = 0;
   late final List<Widget> _pages;
   late final MobileApi api;
+  bool _hasCheckedNewUser = false;
 
   @override
   void initState() {
@@ -52,7 +55,53 @@ class _HomePageState extends ConsumerState<HomePage> {
       _setupFirebaseMessaging();
       _checkPolicies();
       _checkPromotions();
+      _checkNewUserOnboarding();
     });
+  }
+
+  void _checkNewUserOnboarding() {
+    if (_hasCheckedNewUser) return;
+    _hasCheckedNewUser = true;
+
+    final isNewUser = widget.data['is_new_user'] == true;
+    if (isNewUser && mounted) {
+      final user = widget.data['user'] as Map? ?? {};
+      final name = user['name']?.toString() ?? '';
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (dialogContext) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text('¡Bienvenido, $name!'),
+              content: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.directions_car, color: Color(0xFF0076D6), size: 60),
+                  SizedBox(height: 16),
+                  Text(
+                    'Tu cuenta ha sido creada exitosamente. Para cumplir con impuestos y poder iniciar cargas, registra tu placa.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const VehiclesScreen()),
+                    );
+                  },
+                  child: const Text('Registrar Placa'),
+                ),
+              ],
+            ),
+      );
+    }
   }
 
   void _checkPolicies() async {
@@ -278,7 +327,26 @@ class _HomePageState extends ConsumerState<HomePage> {
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
             icon: const Icon(LucideIcons.settings),
           ),
-          IconButton(onPressed: () => ref.read(authControllerProvider.notifier).logout(), icon: const Icon(Icons.logout)),
+          IconButton(
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('¿Salir de la aplicación?'),
+                  content: const Text('¿Estás seguro de que deseas salir y cerrar ElectroPoint?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Salir')),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await SystemNavigator.pop();
+              }
+            },
+            icon: const Icon(Icons.exit_to_app),
+            tooltip: 'Salir de la aplicación',
+          ),
         ],
       ),
       body: IndexedStack(index: index, children: _pages),
@@ -292,7 +360,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
         destinations: const [
           NavigationDestination(icon: Icon(Icons.map_outlined), label: 'Mapa'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), label: 'Billetera'),
+          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), label: 'Saldo'),
           NavigationDestination(icon: Icon(Icons.bolt), label: 'Cargar'),
           NavigationDestination(icon: Icon(Icons.history), label: 'Cargas'),
         ],
