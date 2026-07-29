@@ -17,6 +17,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _phoneController;
   late TextEditingController _nitController;
   late TextEditingController _razonSocialController;
   late TextEditingController _passwordController;
@@ -25,11 +26,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditing = false;
 
   late String _initialName;
+  late String _initialPhone;
   late String _initialNit;
   late String _initialRazonSocial;
 
   bool get _hasChanges {
     return _nameController.text != _initialName ||
+        _phoneController.text.trim() != _initialPhone ||
         _nitController.text.trim() != _initialNit ||
         _razonSocialController.text != _initialRazonSocial ||
         _passwordController.text.isNotEmpty ||
@@ -40,6 +43,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() {
       _isEditing = false;
       _nameController.text = _initialName;
+      _phoneController.text = _initialPhone;
       _nitController.text = _initialNit;
       _razonSocialController.text = _initialRazonSocial;
       _passwordController.clear();
@@ -54,12 +58,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = authData?['user'] as Map? ?? {};
 
     _nameController = TextEditingController(text: user['name']?.toString() ?? '');
+    _phoneController = TextEditingController(text: user['phone']?.toString() ?? '');
     _nitController = TextEditingController(text: user['billing_document']?.toString() ?? '');
     _razonSocialController = TextEditingController(text: user['billing_razon_social']?.toString() ?? '');
     _passwordController = TextEditingController();
     _passwordConfirmController = TextEditingController();
 
     _initialName = _nameController.text;
+    _initialPhone = _phoneController.text.trim();
     _initialNit = _nitController.text.trim();
     _initialRazonSocial = _razonSocialController.text;
   }
@@ -67,6 +73,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _nitController.dispose();
     _razonSocialController.dispose();
     _passwordController.dispose();
@@ -174,6 +181,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       final data = {
         'name': _nameController.text,
+        'phone': _phoneController.text.trim(),
         'billing_document': _nitController.text.trim(),
         'billing_razon_social': _razonSocialController.text,
         if (_passwordController.text.isNotEmpty) ...{
@@ -186,6 +194,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         setState(() {
           _initialName = _nameController.text;
+          _initialPhone = _phoneController.text.trim();
           _initialNit = _nitController.text.trim();
           _initialRazonSocial = _razonSocialController.text;
           _passwordController.clear();
@@ -334,6 +343,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   enabled: !_isLoading && _isEditing,
                   decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(LucideIcons.user)),
                   validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _phoneController,
+                  enabled: !_isLoading && _isEditing,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Teléfono', prefixIcon: Icon(LucideIcons.phone)),
                 ),
                 const SizedBox(height: 32),
                 Text(

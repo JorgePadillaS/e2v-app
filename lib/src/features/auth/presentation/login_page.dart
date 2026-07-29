@@ -18,6 +18,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final pass = TextEditingController();
   final confirmPass = TextEditingController();
   final name = TextEditingController();
+  final phone = TextEditingController();
   final billingDocument = TextEditingController();
   final billingDocType = TextEditingController(text: 'CI');
   final billingRazonSocial = TextEditingController();
@@ -36,6 +37,34 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   String? nameError;
   String? passError;
   String? confirmPassError;
+  String? billingRazonSocialError;
+  String? phoneError;
+
+  void _validateBillingRazonSocial(String value) {
+    if (!registerMode) return;
+    setState(() {
+      final valueTrim = value.trim();
+      if (valueTrim.isEmpty) {
+        billingRazonSocialError = 'La razón social es obligatoria';
+      } else {
+        billingRazonSocialError = null;
+      }
+    });
+  }
+
+  void _validatePhone(String value) {
+    if (!registerMode) return;
+    setState(() {
+      final valueTrim = value.trim();
+      if (valueTrim.isEmpty) {
+        phoneError = 'El teléfono es obligatorio';
+      } else if (!RegExp(r'^\+?[0-9]{7,15}$').hasMatch(valueTrim)) {
+        phoneError = 'Número de teléfono inválido (debe tener entre 7 y 15 dígitos)';
+      } else {
+        phoneError = null;
+      }
+    });
+  }
 
   void _validateName(String value) {
     if (!registerMode) return;
@@ -428,6 +457,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             errorText: nameError,
                             onChanged: _validateName,
                           ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            controller: phone,
+                            label: 'Teléfono',
+                            icon: LucideIcons.phone,
+                            keyboardType: TextInputType.phone,
+                            errorText: phoneError,
+                            onChanged: _validatePhone,
+                          ),
                         ],
                         const SizedBox(height: 16),
                         _buildTextField(
@@ -530,6 +568,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             controller: billingRazonSocial,
                             label: 'Razón Social / Nombre Factura',
                             icon: LucideIcons.fileText,
+                            helperText: 'Ponga su nombre',
+                            errorText: billingRazonSocialError,
+                            onChanged: _validateBillingRazonSocial,
                           ),
                         ],
                         const SizedBox(height: 32),
@@ -543,9 +584,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       setState(() => localError = null);
                                       if (registerMode) {
                                         _validateName(name.text);
+                                        _validatePhone(phone.text);
                                         _validateEmailFormat(email.text);
                                         _validatePassword(pass.text);
                                         _validateConfirmPassword(confirmPass.text);
+                                        _validateBillingRazonSocial(billingRazonSocial.text);
 
                                         final docText = billingDocument.text.trim();
                                         if (docText.isEmpty) {
@@ -559,7 +602,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                           }
                                         }
 
-                                        if (nameError != null || emailError != null || passError != null || confirmPassError != null || nitError != null) {
+                                        if (nameError != null ||
+                                            phoneError != null ||
+                                            emailError != null ||
+                                            passError != null ||
+                                            confirmPassError != null ||
+                                            nitError != null ||
+                                            billingRazonSocialError != null) {
                                           setState(() => localError = 'Por favor, corrige los errores en el formulario');
                                           return;
                                         }
@@ -570,6 +619,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                               name: name.text.trim(),
                                               email: email.text.trim(),
                                               password: pass.text,
+                                              phone: phone.text.trim(),
                                               billingDocument: billingDocument.text.trim(),
                                               billingDocType: billingDocType.text,
                                               billingRazonSocial: billingRazonSocial.text.trim(),
@@ -649,11 +699,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             localError = null;
                             emailError = null;
                             nameError = null;
+                            phoneError = null;
+                            billingRazonSocialError = null;
                             passError = null;
                             confirmPassError = null;
                             nitError = null;
                             pass.clear();
                             confirmPass.clear();
+                            phone.clear();
+                            billingRazonSocial.clear();
                           }),
                           child: Text(
                             registerMode ? '¿Ya tienes una cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí',
@@ -697,6 +751,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     TextInputType? keyboardType,
     FocusNode? focusNode,
     String? errorText,
+    String? helperText,
     Widget? suffix,
     void Function(String)? onChanged,
   }) {
@@ -708,6 +763,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
+        helperText: helperText,
         prefixIcon: Icon(icon, size: 20),
         suffixIcon: isPassword
             ? IconButton(
