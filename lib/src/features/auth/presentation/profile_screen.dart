@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../core/config/branding_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'vehicles_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -471,6 +472,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 32),
+                const _AppVersionWidget(),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -508,6 +512,27 @@ class _LegalSection extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _AppVersionWidget extends StatelessWidget {
+  const _AppVersionWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final info = snapshot.data!;
+        return Center(
+          child: Text(
+            'Versión ${info.version} (${info.buildNumber})',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          ),
+        );
+      },
     );
   }
 }
