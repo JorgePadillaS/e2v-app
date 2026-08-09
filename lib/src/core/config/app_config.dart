@@ -1,10 +1,10 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 class AppConfig {
-  static String _apiBaseUrl = 'https://epservice.dmc.bo/api/v1/mobile/';
-  static String _wsHost = 'epservice.dmc.bo';
+  static String _apiBaseUrl = 'https://e2v.evbol.com/api/v1/mobile/';
+  static String _wsHost = 'e2v.evbol.com';
   static String _reverbKey = '1d2afbx4y8f4ls8dahrr';
-  static String _disclaimerUrl = 'https://www.e2v.bo/disclaimer/';
+  static String _disclaimerUrl = 'https://e2v.evbol.com/disclaimer/';
 
   static String get apiBaseUrl => _apiBaseUrl;
   static String get wsHost => _wsHost;

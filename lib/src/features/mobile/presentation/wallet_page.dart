@@ -240,46 +240,84 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     }
     
     String? selectedPlate;
-    if (validVehicles.length == 1) {
-      selectedPlate = validVehicles.first['plate'].toString().trim();
-    } else {
-      selectedPlate = await showDialog<String>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogCtx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Selecciona tu vehiculo'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: validVehicles.length,
-              itemBuilder: (context, index) {
-                final v = validVehicles[index];
-                final brand = v['brand']?.toString() ?? '';
-                final model = v['model']?.toString() ?? '';
-                final plate = v['plate']?.toString() ?? '';
-                
-                return ListTile(
-                  leading: const Icon(LucideIcons.car, color: Colors.blue),
-                  title: Text(plate, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('$brand $model'),
-                  onTap: () => Navigator.pop(dialogCtx, plate),
-                );
-              },
+    
+    selectedPlate = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Placa para Facturación (Sector 31)'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Selecciona la placa del vehículo que figurará en tu factura de recarga:',
+              style: TextStyle(fontSize: 13, color: Colors.black87),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, null),
-              child: const Text('Cancelar'),
+            const SizedBox(height: 12),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: validVehicles.length,
+                itemBuilder: (context, index) {
+                  final v = validVehicles[index];
+                  final brand = v['brand']?.toString() ?? '';
+                  final model = v['model']?.toString() ?? '';
+                  final plate = v['plate']?.toString() ?? '';
+                  
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(LucideIcons.car, color: Colors.blue),
+                      title: Text(plate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      subtitle: Text('$brand $model'.trim().isEmpty ? 'Vehículo' : '$brand $model'),
+                      trailing: const Icon(LucideIcons.chevronRight, size: 18, color: Colors.grey),
+                      onTap: () => Navigator.pop(dialogCtx, plate),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.maxFinite, 45),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(LucideIcons.plusCircle, size: 18),
+              label: const Text('Registrar nueva placa'),
+              onPressed: () {
+                Navigator.pop(dialogCtx, 'NEW_PLATE');
+              },
             ),
           ],
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, null),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedPlate == 'NEW_PLATE') {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VehiclesScreen()),
+        );
+      }
+      return;
     }
     
-    if (selectedPlate == null) return; // User cancelled
+    if (selectedPlate == null || selectedPlate.isEmpty) return; // User cancelled
     
     // Show loader for checkout
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
