@@ -197,113 +197,135 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     List<dynamic> vehicles = [];
     try {
       vehicles = await widget.api.getVehicles();
-      if (mounted) Navigator.pop(context); // Close loader
-    } catch (e) {
-      if (mounted) {
+    } catch (_) {
+      // Safe fallback if vehicles API fails or endpoint not available
+      vehicles = [];
+    } finally {
+      if (mounted && Navigator.canPop(context)) {
         Navigator.pop(context); // Close loader
-        showAppToast(context, 'Error al obtener vehículos: $e', type: AppToastType.error);
       }
-      return;
     }
     
     final validVehicles = vehicles.where((v) => v['plate'] != null && v['plate'].toString().trim().isNotEmpty).toList();
-    
-    if (validVehicles.isEmpty) {
-      // Show dialog asking to register a plate
-      showDialog(
-        context: context,
-        builder: (dialogCtx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Registro de Placa Requerido'),
-          content: const Text(
-            'Para cumplir con Impuestos Nacionales, debes registrar la placa de tu vehículo antes de recargar saldo o realizar pagos.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogCtx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const VehiclesScreen()),
-                );
-              },
-              child: const Text('Registrar Placa'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-    
-    String? selectedPlate;
-    
-    selectedPlate = await showDialog<String>(
+    final initialPlate = validVehicles.isNotEmpty ? validVehicles.first['plate'].toString().trim() : '';
+    final customPlateCtrl = TextEditingController(text: initialPlate);
+
+    String? selectedPlate = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Placa para Facturación (Sector 31)'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Selecciona la placa del vehículo que figurará en tu factura de recarga:',
-              style: TextStyle(fontSize: 13, color: Colors.black87),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                const Icon(LucideIcons.fileText, color: Colors.blue, size: 22),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Placa para Facturación (Sector 31)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: validVehicles.length,
-                itemBuilder: (context, index) {
-                  final v = validVehicles[index];
-                  final brand = v['brand']?.toString() ?? '';
-                  final model = v['model']?.toString() ?? '';
-                  final plate = v['plate']?.toString() ?? '';
-                  
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.withOpacity(0.2)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ingresa o selecciona la placa del vehículo que figurará en tu factura de recarga:',
+                    style: TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: customPlateCtrl,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      labelText: 'Placa del Vehículo *',
+                      hintText: 'Ej: 5318FPG',
+                      prefixIcon: const Icon(LucideIcons.car, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
-                    child: ListTile(
-                      leading: const Icon(LucideIcons.car, color: Colors.blue),
-                      title: Text(plate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      subtitle: Text('$brand $model'.trim().isEmpty ? 'Vehículo' : '$brand $model'),
-                      trailing: const Icon(LucideIcons.chevronRight, size: 18, color: Colors.grey),
-                      onTap: () => Navigator.pop(dialogCtx, plate),
+                  ),
+                  if (validVehicles.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      'O selecciona de tus vehículos registrados:',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey),
                     ),
-                  );
+                    const SizedBox(height: 8),
+                    ...validVehicles.map((v) {
+                      final brand = v['brand']?.toString() ?? '';
+                      final model = v['model']?.toString() ?? '';
+                      final plate = v['plate']?.toString().trim() ?? '';
+                      final isSelected = customPlateCtrl.text.trim().toUpperCase() == plate.toUpperCase();
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.2),
+                            width: isSelected ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: ListTile(
+                          dense: true,
+                          leading: Icon(LucideIcons.car, color: isSelected ? Colors.blue : Colors.grey),
+                          title: Text(plate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          subtitle: Text('$brand $model'.trim().isEmpty ? 'Vehículo' : '$brand $model'),
+                          trailing: isSelected ? const Icon(LucideIcons.checkCircle, color: Colors.blue, size: 20) : null,
+                          onTap: () {
+                            setDialogState(() {
+                              customPlateCtrl.text = plate;
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.maxFinite, 42),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(LucideIcons.plusCircle, size: 16),
+                    label: const Text('Registrar nuevo vehículo'),
+                    onPressed: () {
+                      Navigator.pop(dialogCtx, 'NEW_PLATE');
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, null),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  final typedPlate = customPlateCtrl.text.trim().toUpperCase();
+                  if (typedPlate.isEmpty) {
+                    showAppToast(context, 'Debes ingresar o seleccionar una placa', type: AppToastType.warning);
+                    return;
+                  }
+                  Navigator.pop(dialogCtx, typedPlate);
                 },
+                child: const Text('CONTINUAR A PAGAR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.maxFinite, 45),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const Icon(LucideIcons.plusCircle, size: 18),
-              label: const Text('Registrar nueva placa'),
-              onPressed: () {
-                Navigator.pop(dialogCtx, 'NEW_PLATE');
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, null),
-            child: const Text('Cancelar'),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
 
@@ -317,7 +339,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       return;
     }
     
-    if (selectedPlate == null || selectedPlate.isEmpty) return; // User cancelled
+    if (selectedPlate == null || selectedPlate.trim().isEmpty) return; // User cancelled
     
     // Show loader for checkout
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
