@@ -58,7 +58,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 600));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.byType(TextField), 200);
+      final walletScroll = find.byWidgetPredicate((widget) => widget is Scrollable && widget.axisDirection == AxisDirection.down).first;
+      await tester.scrollUntilVisible(find.byType(TextField), 200, scrollable: walletScroll);
       final field = tester.widget<TextField>(find.byType(TextField).first);
       final context = tester.element(find.byType(TextField).first);
       final theme = Theme.of(context);
@@ -71,6 +72,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.text('Continuar al pago · QR / tarjeta'),
         150,
+        scrollable: walletScroll,
       );
       await tester.tap(find.text('Continuar al pago · QR / tarjeta'));
       await tester.pumpAndSettle();
