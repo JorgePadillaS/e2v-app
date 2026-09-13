@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'maxvolt_theme.dart';
 
@@ -11,14 +12,16 @@ class HoldToStop extends StatefulWidget {
   State<HoldToStop> createState() => _HoldToStopState();
 }
 
-class _HoldToStopState extends State<HoldToStop> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final AnimationController _progress = AnimationController(vsync: this, duration: const Duration(seconds: 2))
-    ..addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _cancel();
-        if (widget.enabled) widget.onConfirm();
-      }
-    });
+class _HoldToStopState extends State<HoldToStop>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  late final AnimationController _progress =
+      AnimationController(vsync: this, duration: const Duration(seconds: 2))
+        ..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _cancel();
+            if (widget.enabled) widget.onConfirm();
+          }
+        });
   @override
   void initState() {
     super.initState();
@@ -28,9 +31,8 @@ class _HoldToStopState extends State<HoldToStop> with SingleTickerProviderStateM
   bool _pointerActivation = false;
   void _release() {
     _cancel();
-    Future<void>.delayed(Duration.zero, () {
-      _pointerActivation = false;
-    });
+    // Keep touch activation suppressed after release: InkWell can deliver
+    // onPressed after pointer-up. Only a keyboard event switches input mode.
   }
 
   void _cancel() {
@@ -63,45 +65,53 @@ class _HoldToStopState extends State<HoldToStop> with SingleTickerProviderStateM
     label: 'Detener carga. Abrir confirmación',
     onTap: widget.enabled ? widget.onConfirm : null,
     child: ExcludeSemantics(
-      child: Listener(
-        onPointerDown: widget.enabled
-            ? (_) {
-                _pointerActivation = true;
-                _progress.forward(from: 0);
-              }
-            : null,
-        onPointerUp: (_) => _release(),
-        onPointerCancel: (_) => _release(),
-        child: AnimatedBuilder(
-          animation: _progress,
-          builder: (context, _) => Stack(
-            children: [
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: _progress.value,
-                      heightFactor: 1,
-                      child: ColoredBox(color: MaxVolt.mint.withValues(alpha: .25)),
+      child: Focus(
+        onKeyEvent: (_, event) {
+          if (event is KeyDownEvent) _pointerActivation = false;
+          return KeyEventResult.ignored;
+        },
+        child: Listener(
+          onPointerDown: widget.enabled
+              ? (_) {
+                  _pointerActivation = true;
+                  _progress.forward(from: 0);
+                }
+              : null,
+          onPointerUp: (_) => _release(),
+          onPointerCancel: (_) => _release(),
+          child: AnimatedBuilder(
+            animation: _progress,
+            builder: (context, _) => Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: _progress.value,
+                        heightFactor: 1,
+                        child: ColoredBox(
+                          color: MaxVolt.mint.withValues(alpha: .25),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: widget.enabled
-                      ? () {
-                          if (!_pointerActivation) widget.onConfirm();
-                        }
-                      : null,
-                  icon: const Icon(Icons.stop_circle_outlined),
-                  label: const Text('Mantén 2 s para detener'),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: widget.enabled
+                        ? () {
+                            if (!_pointerActivation) widget.onConfirm();
+                          }
+                        : null,
+                    icon: const Icon(Icons.stop_circle_outlined),
+                    label: const Text('Mantén 2 s para detener'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
