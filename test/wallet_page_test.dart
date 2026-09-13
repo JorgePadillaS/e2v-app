@@ -70,10 +70,11 @@ void main() {
           (background.computeLuminance() + .05);
       expect(ratio, greaterThan(4.5));
       await tester.scrollUntilVisible(
-        find.text('Continuar al pago · QR / tarjeta'),
+        find.text('Continuar al pago · QR / tarjeta').hitTestable(),
         150,
         scrollable: walletScroll,
       );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Continuar al pago · QR / tarjeta'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('CONTINUAR A PAGAR'));
