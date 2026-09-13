@@ -358,36 +358,39 @@ class _WalletPageState extends ConsumerState<WalletPage>
                             width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(
-                            LucideIcons.car,
-                            color: isSelected ? Colors.blue : Colors.grey,
-                          ),
-                          title: Text(
-                            plate,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: ListTile(
+                            dense: true,
+                            leading: Icon(
+                              LucideIcons.car,
+                              color: isSelected ? Colors.blue : Colors.grey,
                             ),
+                            title: Text(
+                              plate,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '$brand $model'.trim().isEmpty
+                                  ? 'Vehículo'
+                                  : '$brand $model',
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    LucideIcons.checkCircle,
+                                    color: Colors.blue,
+                                    size: 20,
+                                  )
+                                : null,
+                            onTap: () {
+                              setDialogState(() {
+                                customPlateCtrl.text = plate;
+                              });
+                            },
                           ),
-                          subtitle: Text(
-                            '$brand $model'.trim().isEmpty
-                                ? 'Vehículo'
-                                : '$brand $model',
-                          ),
-                          trailing: isSelected
-                              ? const Icon(
-                                  LucideIcons.checkCircle,
-                                  color: Colors.blue,
-                                  size: 20,
-                                )
-                              : null,
-                          onTap: () {
-                            setDialogState(() {
-                              customPlateCtrl.text = plate;
-                            });
-                          },
                         ),
                       );
                     }).toList(),
