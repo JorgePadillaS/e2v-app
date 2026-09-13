@@ -1,3 +1,4 @@
+import 'src/features/auth/presentation/splash_screen.dart';
 import 'src/app.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,7 @@ class _AppStartupWidgetState extends State<AppStartupWidget> {
 
         return const MaterialApp(
           debugShowCheckedModeBanner: false,
-          home: Scaffold(body: Center(child: CircularProgressIndicator())),
+          home: SplashScreen(),
         );
       },
     );

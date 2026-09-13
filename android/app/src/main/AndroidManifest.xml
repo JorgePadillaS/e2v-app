@@ -10,7 +10,7 @@
     <!--<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />-->
 
     <application
-        android:label="ElectroPoint"
+        android:label="MaxVolt"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -40,12 +40,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="e2vapp" android:host="payment-complete" />
+                <data android:scheme="maxvolt" android:host="payment-complete" />
             </intent-filter>
         </activity>
         <service
             android:name=".NfcHceService"
             android:exported="true"
-            android:label="ElectroPoint HCE"
+            android:label="MaxVolt HCE"
             android:permission="android.permission.BIND_NFC_SERVICE">
             <intent-filter>
                 <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />

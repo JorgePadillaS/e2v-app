@@ -1,3 +1,6 @@
+import '../../../features/mobile/presentation/notifications_page.dart';
+import '../../../core/ui/maxvolt_theme.dart';
+import 'maxvolt_account_page.dart';
 import '../../../features/auth/application/auth_controller.dart';
 import '../../../features/mobile/application/active_session_notifier.dart';
 import '../../../features/mobile/application/wallet_refresh_provider.dart';
@@ -6,16 +9,16 @@ import '../../../features/mobile/presentation/nfc_page.dart';
 import '../../../features/mobile/presentation/sessions_page.dart';
 import '../../../features/mobile/presentation/map/screens/charging_map_screen.dart';
 import '../../../features/mobile/presentation/wallet_page.dart';
-import '../../../features/auth/presentation/profile_screen.dart';
 import 'vehicles_screen.dart';
 import '../../../features/mobile/application/notification_notifier.dart';
-import '../../../features/mobile/presentation/notifications_page.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
 import '../../../core/config/branding_provider.dart';
+
 import 'package:dio/dio.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -31,6 +34,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   late final List<Widget> _pages;
   late final MobileApi api;
   bool _hasCheckedNewUser = false;
+  bool _hasCheckedBranding = false;
+  late Future<Map<String, dynamic>> _balance;
 
   @override
   void initState() {
@@ -38,14 +43,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     final user = Map<String, dynamic>.from(widget.data['user'] as Map);
     final token = widget.data['token']?.toString() ?? '';
     api = MobileApi(token);
+    _balance = api.wallet();
 
-    final assignedTag = (widget.data['rfid_tag'] is Map) ? (widget.data['rfid_tag']['tag_code']?.toString() ?? '') : '';
+    final assignedTag = (widget.data['rfid_tag'] is Map)
+        ? (widget.data['rfid_tag']['tag_code']?.toString() ?? '')
+        : '';
 
     _pages = [
       ChargingMapScreen(api: api),
-      WalletPage(api: api, displayName: user['name']?.toString()),
       NfcPage(assignedTag: assignedTag, api: api),
-      SessionsPage(api: api),
+      SessionsPage(api: api, onActiveSession: () => setState(() => index = 1)),
     ];
 
     // Initial fetch and start polling
@@ -53,8 +60,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ref.read(notificationProvider.notifier).startPolling(api);
       ref.read(activeSessionProvider.notifier).startPolling(api);
       _setupFirebaseMessaging();
-      _checkPolicies();
-      _checkPromotions();
+      _checkBranding();
       _checkNewUserOnboarding();
     });
   }
@@ -71,37 +77,48 @@ class _HomePageState extends ConsumerState<HomePage> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder:
-            (dialogContext) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Text('¡Bienvenido, $name!'),
-              content: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.directions_car, color: Color(0xFF0076D6), size: 60),
-                  SizedBox(height: 16),
-                  Text(
-                    'Tu cuenta ha sido creada exitosamente. Para cumplir con impuestos y poder iniciar cargas, registra tu placa.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ],
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text('¡Bienvenido, $name!'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.directions_car, color: Color(0xFF03624C), size: 60),
+              SizedBox(height: 16),
+              Text(
+                'Tu cuenta ha sido creada exitosamente. Para cumplir con impuestos y poder iniciar cargas, registra tu placa.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const VehiclesScreen()),
-                    );
-                  },
-                  child: const Text('Registrar Placa'),
-                ),
-              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const VehiclesScreen()),
+                );
+              },
+              child: const Text('Registrar Placa'),
             ),
+          ],
+        ),
       );
     }
+  }
+
+  void _checkBranding() {
+    if (!mounted ||
+        _hasCheckedBranding ||
+        ref.read(brandingProvider).value == null)
+      return;
+    _hasCheckedBranding = true;
+    _checkPolicies();
+    _checkPromotions();
   }
 
   void _checkPolicies() async {
@@ -123,12 +140,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder:
-          (context) => _MandatoryBillingForm(
-            onComplete: () {
-              ref.read(brandingProvider.notifier).refresh();
-            },
-          ),
+      builder: (context) => _MandatoryBillingForm(
+        onComplete: () {
+          ref.read(brandingProvider.notifier).refresh();
+        },
+      ),
     );
   }
 
@@ -146,40 +162,55 @@ class _HomePageState extends ConsumerState<HomePage> {
 
       await showDialog(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              contentPadding: EdgeInsets.zero,
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (promo.imageUrl != null)
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                      child: Image.network(
-                        promo.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: EdgeInsets.zero,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (promo.imageUrl != null)
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: Image.network(
+                    promo.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Text(
+                      promo.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Text(
-                          promo.title,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(promo.body, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
-                      ],
+                    const SizedBox(height: 12),
+                    Text(
+                      promo.body,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade700),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Entendido'))],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Entendido'),
             ),
+          ],
+        ),
       );
 
       // Track as seen
@@ -195,7 +226,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     final messaging = FirebaseMessaging.instance;
 
     // Request permissions (important for iOS and Android 13+)
-    final settings = await messaging.requestPermission(alert: true, badge: true, sound: true);
+    final settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       // Get token and send to backend
@@ -219,24 +254,30 @@ class _HomePageState extends ConsumerState<HomePage> {
           if (type == 'CHARGING_FAILED') {
             showDialog(
               context: context,
-              builder:
-                  (ctx) => AlertDialog(
-                    title: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700),
-                        const SizedBox(width: 12),
-                        const Text('Falla en la carga'),
-                      ],
+              builder: (ctx) => AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade700),
+                    const SizedBox(width: 12),
+                    const Text('Falla en la carga'),
+                  ],
+                ),
+                content: Text(
+                  message.notification!.body ?? 'No se pudo iniciar la carga.',
+                ),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
                     ),
-                    content: Text(message.notification!.body ?? 'No se pudo iniciar la carga.'),
-                    actions: [
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                        child: const Text('ENTENDIDO', style: TextStyle(color: Colors.white)),
-                      ),
-                    ],
+                    child: const Text(
+                      'ENTENDIDO',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
+                ],
+              ),
             );
           } else {
             // Show standard snackbar for other notifications
@@ -256,7 +297,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                 behavior: SnackBarBehavior.floating,
                 action: SnackBarAction(
                   label: 'Ver',
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsPage(api: api))),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NotificationsPage(api: api),
+                    ),
+                  ),
                 ),
               ),
             );
@@ -267,7 +313,10 @@ class _HomePageState extends ConsumerState<HomePage> {
       // Handle message click when app is in background/terminated
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         if (!mounted) return;
-        Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsPage(api: api)));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => NotificationsPage(api: api)),
+        );
       });
     }
   }
@@ -275,95 +324,197 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void dispose() {
     ref.read(notificationProvider.notifier).stopPolling();
+    ref.read(activeSessionProvider.notifier).stopPolling();
     super.dispose();
+  }
+
+  Future<void> _openWallet() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WalletPage(
+          api: api,
+          displayName: (widget.data['user'] as Map?)?['name']?.toString(),
+        ),
+      ),
+    );
+    if (mounted) {
+      setState(() => _balance = api.wallet());
+      ref.read(walletRefreshProvider.notifier).state++;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final notificationState = ref.watch(notificationProvider);
-    final branding = ref.watch(brandingProvider).value;
-
-    final unreadCount = notificationState.maybeWhen(data: (data) => (data['unread_count'] as num? ?? 0).toInt(), orElse: () => 0);
-
+    ref.watch(brandingProvider);
+    ref.listen(brandingProvider, (previous, next) {
+      if (next.hasValue) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _checkBranding());
+      }
+    });
+    final session = ref.watch(activeSessionProvider).value;
+    ref.listen(activeSessionProvider, (previous, next) {
+      if (previous?.value != null &&
+          next.asData?.value == null &&
+          next.hasValue) {
+        setState(() => _balance = api.wallet());
+      }
+    });
     return Scaffold(
       appBar: AppBar(
-        title: Hero(
-          tag: 'app_logo',
-          child:
-              branding?.logoUrl != null
-                  ? Image.network(
-                    branding!.logoUrl!,
-                    height: 38,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Image.asset('assets/logo_leyenda.png', height: 38, fit: BoxFit.contain),
-                  )
-                  : Image.asset('assets/logo_leyenda.png', height: 38, fit: BoxFit.contain),
-        ),
+        backgroundColor: MaxVolt.forest,
+        foregroundColor: MaxVolt.paper,
+        titleSpacing: 12,
+        title: const MaxVoltLogo(width: 112),
         actions: [
-          Stack(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsPage(api: api))),
-                icon: const Icon(LucideIcons.bell),
-              ),
-              if (unreadCount > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(10)),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      unreadCount > 9 ? '9+' : '$unreadCount',
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+          FutureBuilder<Map<String, dynamic>>(
+            future: _balance,
+            builder: (context, snapshot) {
+              final value = double.tryParse(
+                snapshot.data?['app_balance']?.toString() ?? '',
+              );
+              return TextButton.icon(
+                onPressed: _openWallet,
+                style: TextButton.styleFrom(
+                  foregroundColor: MaxVolt.paper,
+                  minimumSize: const Size(48, 48),
                 ),
-            ],
-          ),
-          IconButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
-            icon: const Icon(LucideIcons.settings),
-          ),
-          IconButton(
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('¿Salir de la aplicación?'),
-                  content: const Text('¿Estás seguro de que deseas salir y cerrar ElectroPoint?'),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Salir')),
-                  ],
+                icon: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 20,
+                ),
+                label: Text(
+                  value == null ? 'Saldo' : 'Bs ${value.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 13),
                 ),
               );
-              if (confirm == true) {
-                await SystemNavigator.pop();
-              }
             },
-            icon: const Icon(Icons.exit_to_app),
-            tooltip: 'Salir de la aplicación',
+          ),
+          IconButton(
+            tooltip: 'Perfil y ajustes',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    MaxVoltAccountPage(api: api, openWallet: _openWallet),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
+      body: Column(
+        children: [
+          if (session != null && index != 1)
+            Material(
+              color: MaxVolt.forest,
+              child: InkWell(
+                onTap: () => setState(() => index = 1),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    children: [
+                      Icon(Icons.bolt, color: MaxVolt.lime, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Tu sesión de carga',
+                          style: TextStyle(color: MaxVolt.paper),
+                        ),
+                      ),
+                      Text(
+                        'Ver sesión →',
+                        style: TextStyle(color: MaxVolt.paper),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: index,
+              children: [
+                for (var i = 0; i < _pages.length; i++)
+                  TickerMode(enabled: i == index, child: _pages[i]),
+              ],
+            ),
           ),
         ],
       ),
-      body: IndexedStack(index: index, children: _pages),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (v) {
-          setState(() => index = v);
-          if (v == 1) ref.read(walletRefreshProvider.notifier).state++;
-          if (v == 2) ref.read(activeSessionProvider.notifier).refresh();
-          if (v == 3) ref.read(activeSessionProvider.notifier).refresh();
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.map_outlined), label: 'Mapa'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), label: 'Saldo'),
-          NavigationDestination(icon: Icon(Icons.bolt), label: 'Cargar'),
-          NavigationDestination(icon: Icon(Icons.history), label: 'Cargas'),
-        ],
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: Row(
+            children: [
+              _destination(0, Icons.map_outlined, 'Mapa'),
+              _destination(1, Icons.qr_code_scanner, 'Cargar'),
+              _destination(2, Icons.history, 'Historial'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _destination(int destination, IconData icon, String label) {
+    final selected = index == destination;
+    final charge = destination == 1;
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Semantics(
+          selected: selected,
+          child: Material(
+            color: charge
+                ? MaxVolt.lime
+                : selected
+                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                setState(() => index = destination);
+                if (destination != 0)
+                  ref.read(activeSessionProvider.notifier).refresh();
+              },
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: charge ? 16 : 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: charge ? 28 : 23,
+                      color: charge
+                          ? MaxVolt.night
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: charge
+                            ? MaxVolt.night
+                            : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -374,7 +525,8 @@ class _MandatoryBillingForm extends ConsumerStatefulWidget {
   final VoidCallback onComplete;
 
   @override
-  ConsumerState<_MandatoryBillingForm> createState() => _MandatoryBillingFormState();
+  ConsumerState<_MandatoryBillingForm> createState() =>
+      _MandatoryBillingFormState();
 }
 
 class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
@@ -408,7 +560,9 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
 
     setState(() => _isValidating = true);
     try {
-      final available = await ref.read(authControllerProvider.notifier).validateField('billing_document', value);
+      final available = await ref
+          .read(authControllerProvider.notifier)
+          .validateField('billing_document', value);
       if (mounted) {
         setState(() {
           _isNitValid = available;
@@ -444,24 +598,30 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder:
-              (context) => AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                title: Text('¡Bienvenido, $name!'),
-                content: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green, size: 60),
-                    SizedBox(height: 16),
-                    Text(
-                      'Tus datos han sido registrados correctamente. Ya puedes empezar a utilizar la aplicación.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ],
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Text('¡Bienvenido, $name!'),
+            content: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 60),
+                SizedBox(height: 16),
+                Text(
+                  'Tus datos han sido registrados correctamente. Ya puedes empezar a utilizar la aplicación.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
                 ),
-                actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Comenzar'))],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Comenzar'),
               ),
+            ],
+          ),
         );
       }
     } catch (e) {
@@ -490,7 +650,10 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
     return PopScope(
       canPop: false,
       child: AlertDialog(
-        title: const Text('Datos de Facturación Requeridos', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Datos de Facturación Requeridos',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -510,16 +673,28 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.red.shade200),
                     ),
-                    child: Text(_errorMessage!, style: TextStyle(color: Colors.red.shade900, fontSize: 12)),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Colors.red.shade900,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ],
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
                   initialValue: _docType,
-                  decoration: const InputDecoration(labelText: 'Tipo de Documento', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de Documento',
+                    border: OutlineInputBorder(),
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'NIT', child: Text('NIT')),
-                    DropdownMenuItem(value: 'CI', child: Text('Cédula de Identidad')),
+                    DropdownMenuItem(
+                      value: 'CI',
+                      child: Text('Cédula de Identidad'),
+                    ),
                     DropdownMenuItem(value: 'OTHER', child: Text('Otro')),
                   ],
                   onChanged: (v) => setState(() => _docType = v!),
@@ -529,18 +704,27 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
                   controller: _nitCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: _docType == 'NIT' ? 'Número de NIT' : 'Cédula de Identidad',
+                    labelText: _docType == 'NIT'
+                        ? 'Número de NIT'
+                        : 'Cédula de Identidad',
                     prefixIcon: const Icon(Icons.badge_outlined),
                     border: const OutlineInputBorder(),
                     errorText: _nitError,
-                    suffixIcon:
-                        _isValidating
-                            ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2)),
-                            )
-                            : (_isNitValid ? const Icon(Icons.check_circle, color: Colors.green) : null),
+                    suffixIcon: _isValidating
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: Padding(
+                              padding: EdgeInsets.all(10),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : (_isNitValid
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                )
+                              : null),
                   ),
                   onChanged: _validateNit,
                   validator: (v) {
@@ -557,7 +741,8 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.business),
                   ),
-                  validator: (v) => v == null || v.isEmpty ? 'Campo requerido' : null,
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Campo requerido' : null,
                 ),
               ],
             ),
@@ -569,19 +754,30 @@ class _MandatoryBillingFormState extends ConsumerState<_MandatoryBillingForm> {
               Navigator.pop(context); // Close dialog first!
               ref.read(authControllerProvider.notifier).logout();
             },
-            child: const Text('CERRAR SESIÓN', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'CERRAR SESIÓN',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
           ElevatedButton(
-            onPressed: (_loading || _isValidating || !_isNitValid) ? null : _submit,
+            onPressed: (_loading || _isValidating || !_isNitValid)
+                ? null
+                : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
               minimumSize: const Size(150, 45),
             ),
-            child:
-                _loading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('GUARDAR Y CONTINUAR'),
+            child: _loading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text('GUARDAR Y CONTINUAR'),
           ),
         ],
       ),

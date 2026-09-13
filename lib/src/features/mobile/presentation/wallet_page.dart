@@ -1,13 +1,22 @@
+import '../../../core/ui/maxvolt_theme.dart';
+import '../../../core/ui/payment_error.dart';
+
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../../core/ui/app_toast.dart';
 import '../data/mobile_api.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../application/wallet_refresh_provider.dart';
+
 import 'package:dio/dio.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../../auth/presentation/profile_screen.dart';
 import '../../auth/presentation/vehicles_screen.dart';
 
@@ -20,12 +29,14 @@ class WalletPage extends ConsumerStatefulWidget {
   ConsumerState<WalletPage> createState() => _WalletPageState();
 }
 
-class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObserver {
+class _WalletPageState extends ConsumerState<WalletPage>
+    with WidgetsBindingObserver {
   // Safe Futures
   Future<Map<String, dynamic>>? _walletFuture;
   Future<Map<String, dynamic>>? _txFuture;
 
   bool _isRefreshing = false;
+  bool _checkingOut = false;
   final amountCtrl = TextEditingController(text: '50');
   final List<double> quickAmounts = const [50, 100, 150];
   double selectedAmount = 10;
@@ -45,7 +56,10 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     try {
       _initData();
       WidgetsBinding.instance.addObserver(this);
-      Future.delayed(const Duration(milliseconds: 500), () => _safeInitDeepLinks());
+      Future.delayed(
+        const Duration(milliseconds: 500),
+        () => _safeInitDeepLinks(),
+      );
     } catch (_) {}
   }
 
@@ -54,7 +68,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       if (!mounted) return;
       _appLinks = AppLinks();
       _linkSubscription = _appLinks?.uriLinkStream.listen((uri) {
-        if (uri.scheme == 'e2vapp' && uri.host == 'payment-complete') {
+        if ((uri.scheme == 'e2vapp' || uri.scheme == 'maxvolt') &&
+            uri.host == 'payment-complete') {
           final txIdStr = uri.queryParameters['tx_id'];
           final txId = int.tryParse(txIdStr ?? '');
           if (txId != null) {
@@ -107,8 +122,10 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
   Future<void> _checkTransactionStatus(int txId) async {
     try {
       final statusResp = await widget.api.libelulaStatus(txId);
-      final status = (statusResp['status']?.toString() ?? 'PENDING').toUpperCase();
-      final amount = double.tryParse(statusResp['amount']?.toString() ?? '0.0') ?? 0.0;
+      final status = (statusResp['status']?.toString() ?? 'PENDING')
+          .toUpperCase();
+      final amount =
+          double.tryParse(statusResp['amount']?.toString() ?? '0.0') ?? 0.0;
       if (status == 'COMPLETED') {
         _pendingTxId = null;
         if (mounted) {
@@ -128,72 +145,113 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
   void _showSuccessAlert(double amount) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Column(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 60),
-                SizedBox(height: 10),
-                Text('¡Recarga Exitosa!'),
-              ],
-            ),
-            content: Text('Se han acreditado Bs ${amount.toStringAsFixed(2)} a tu saldo.', textAlign: TextAlign.center),
-            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('ENTENDIDO'))],
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Column(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 60),
+            SizedBox(height: 10),
+            Text('¡Recarga Exitosa!'),
+          ],
+        ),
+        content: Text(
+          'Se han acreditado Bs ${amount.toStringAsFixed(2)} a tu saldo.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ENTENDIDO'),
           ),
+        ],
+      ),
     );
   }
 
-  void _showBillingDocumentRequiredDialog(BuildContext context, String message) {
+  void _showBillingDocumentRequiredDialog(
+    BuildContext context,
+    String message,
+  ) {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
-              children: [
-                Icon(LucideIcons.alertTriangle, color: Colors.orange),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Documento Requerido',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            content: Text(message),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Completar Perfil', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(LucideIcons.alertTriangle, color: Colors.orange),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Documento Requerido',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            ],
+            ),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
           ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Completar Perfil',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Future<void> _initiateCheckout() async {
+    if (_checkingOut) return;
+    setState(() => _checkingOut = true);
+    try {
+      await _performCheckout();
+    } finally {
+      if (mounted) setState(() => _checkingOut = false);
+    }
+  }
+
+  Future<void> _performCheckout() async {
     FocusScope.of(context).unfocus();
     final amount = double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0.0;
-    if (amount < 1.0) {
-      showAppToast(context, 'Monto mínimo Bs 1.00', type: AppToastType.warning);
+    if (!amount.isFinite || amount < 1.0 || amount > 10000) {
+      showAppToast(
+        context,
+        'Ingresa un monto entre Bs 1 y Bs 10.000.',
+        type: AppToastType.warning,
+      );
       return;
     }
-    
+
     // Show loader for fetching vehicles
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
-    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
     List<dynamic> vehicles = [];
     try {
       vehicles = await widget.api.getVehicles();
@@ -205,9 +263,19 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
         Navigator.pop(context); // Close loader
       }
     }
-    
-    final validVehicles = vehicles.where((v) => v['plate'] != null && v['plate'].toString().trim().isNotEmpty).toList();
-    final initialPlate = validVehicles.isNotEmpty ? validVehicles.first['plate'].toString().trim() : '';
+
+    if (!mounted) return;
+    final validVehicles = vehicles
+        .where(
+          (v) =>
+              v is Map &&
+              v['plate'] != null &&
+              v['plate'].toString().trim().isNotEmpty,
+        )
+        .toList();
+    final initialPlate = validVehicles.isNotEmpty
+        ? validVehicles.first['plate'].toString().trim()
+        : '';
     final customPlateCtrl = TextEditingController(text: initialPlate);
 
     String? selectedPlate = await showDialog<String>(
@@ -216,7 +284,9 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Row(
               children: [
                 const Icon(LucideIcons.fileText, color: Colors.blue, size: 22),
@@ -236,7 +306,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                 children: [
                   const Text(
                     'Ingresa o selecciona la placa del vehículo que figurará en tu factura de recarga:',
-                    style: TextStyle(fontSize: 13, color: Colors.black87),
+                    style: TextStyle(fontSize: 13),
                   ),
                   const SizedBox(height: 14),
                   TextField(
@@ -246,44 +316,81 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                       labelText: 'Placa del Vehículo *',
                       hintText: 'Ej: 5318FPG',
                       prefixIcon: const Icon(LucideIcons.car, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                   if (validVehicles.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     const Text(
                       'O selecciona de tus vehículos registrados:',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ...validVehicles.map((v) {
                       final brand = v['brand']?.toString() ?? '';
                       final model = v['model']?.toString() ?? '';
                       final plate = v['plate']?.toString().trim() ?? '';
-                      final isSelected = customPlateCtrl.text.trim().toUpperCase() == plate.toUpperCase();
+                      final isSelected =
+                          customPlateCtrl.text.trim().toUpperCase() ==
+                          plate.toUpperCase();
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 6),
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.05),
+                          color: isSelected
+                              ? Colors.blue.withOpacity(0.1)
+                              : Colors.grey.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.2),
+                            color: isSelected
+                                ? Colors.blue
+                                : Colors.grey.withOpacity(0.2),
                             width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(LucideIcons.car, color: isSelected ? Colors.blue : Colors.grey),
-                          title: Text(plate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          subtitle: Text('$brand $model'.trim().isEmpty ? 'Vehículo' : '$brand $model'),
-                          trailing: isSelected ? const Icon(LucideIcons.checkCircle, color: Colors.blue, size: 20) : null,
-                          onTap: () {
-                            setDialogState(() {
-                              customPlateCtrl.text = plate;
-                            });
-                          },
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: ListTile(
+                            dense: true,
+                            leading: Icon(
+                              LucideIcons.car,
+                              color: isSelected ? Colors.blue : Colors.grey,
+                            ),
+                            title: Text(
+                              plate,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '$brand $model'.trim().isEmpty
+                                  ? 'Vehículo'
+                                  : '$brand $model',
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    LucideIcons.checkCircle,
+                                    color: Colors.blue,
+                                    size: 20,
+                                  )
+                                : null,
+                            onTap: () {
+                              setDialogState(() {
+                                customPlateCtrl.text = plate;
+                              });
+                            },
+                          ),
                         ),
                       );
                     }).toList(),
@@ -292,7 +399,9 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(double.maxFinite, 42),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(LucideIcons.plusCircle, size: 16),
                     label: const Text('Registrar nuevo vehículo'),
@@ -311,17 +420,29 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () {
                   final typedPlate = customPlateCtrl.text.trim().toUpperCase();
                   if (typedPlate.isEmpty) {
-                    showAppToast(context, 'Debes ingresar o seleccionar una placa', type: AppToastType.warning);
+                    showAppToast(
+                      context,
+                      'Debes ingresar o seleccionar una placa',
+                      type: AppToastType.warning,
+                    );
                     return;
                   }
                   Navigator.pop(dialogCtx, typedPlate);
                 },
-                child: const Text('CONTINUAR A PAGAR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'CONTINUAR A PAGAR',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           );
@@ -329,6 +450,7 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       ),
     );
 
+    if (!mounted) return;
     if (selectedPlate == 'NEW_PLATE') {
       if (mounted) {
         Navigator.push(
@@ -338,34 +460,75 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       }
       return;
     }
-    
-    if (selectedPlate == null || selectedPlate.trim().isEmpty) return; // User cancelled
-    
+
+    if (selectedPlate == null || selectedPlate.trim().isEmpty)
+      return; // User cancelled
+
     // Show loader for checkout
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
-    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    bool loaderOpen = true;
     try {
-      final res = await widget.api.libelulaCheckout(amount, plate: selectedPlate);
+      final res = await widget.api.libelulaCheckout(
+        amount,
+        plate: selectedPlate,
+      );
       if (!mounted) return;
       Navigator.pop(context); // Close loader
-      
+      loaderOpen = false;
+
       final txId = int.tryParse(res['transaction_id']?.toString() ?? '');
       final url = res['payment_url']?.toString() ?? '';
       if (url.isEmpty) throw Exception('No se pudo generar la URL de pago.');
       _pendingTxId = txId;
       _reload();
-      await launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView);
+      final uri = Uri.tryParse(url);
+      if (uri == null ||
+          uri.scheme != 'https' ||
+          uri.host.isEmpty ||
+          !await launchUrl(uri, mode: LaunchMode.inAppBrowserView)) {
+        throw StateError('Payment page unavailable');
+      }
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // Close loader
+      if (loaderOpen) Navigator.pop(context);
       if (e is DioException) {
         final data = e.response?.data;
         if (data is Map && data['status'] == 'billing_document_required') {
-          _showBillingDocumentRequiredDialog(context, data['message'] ?? 'Se requiere registrar tu NIT/CI.');
+          _showBillingDocumentRequiredDialog(
+            context,
+            data['message'] ?? 'Se requiere registrar tu NIT/CI.',
+          );
           return;
         }
       }
-      showAppToast(context, 'Error: $e', type: AppToastType.error);
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No pudimos continuar al pago'),
+          content: SingleChildScrollView(child: Text(paymentErrorMessage(e))),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
+              child: const Text('Revisar mis datos'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -377,7 +540,12 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
         _reload();
       }
     } catch (e) {
-      if (mounted) showAppToast(context, 'Error al eliminar: $e', type: AppToastType.error);
+      if (mounted)
+        showAppToast(
+          context,
+          'Error al eliminar: $e',
+          type: AppToastType.error,
+        );
     }
   }
 
@@ -387,7 +555,12 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
       debugPrint('Downloading history from: $url');
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } catch (e) {
-      if (mounted) showAppToast(context, 'Error al descargar: $e', type: AppToastType.error);
+      if (mounted)
+        showAppToast(
+          context,
+          'Error al descargar: $e',
+          type: AppToastType.error,
+        );
     }
   }
 
@@ -406,18 +579,30 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverAppBar(
-                title: const Text('Saldo', style: TextStyle(fontWeight: FontWeight.bold)),
+                title: const Text(
+                  'Billetera',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 floating: true,
+                pinned: true,
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.file_download_outlined),
                     onPressed: _downloadHistory,
                     tooltip: 'Descargar Historial (PDF)',
                   ),
-                  IconButton(icon: const Icon(Icons.refresh), onPressed: () => _reload(showLoader: true)),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () => _reload(showLoader: true),
+                  ),
                 ],
               ),
-              SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.all(16), child: _buildBalanceCard(theme))),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _buildBalanceCard(theme),
+                ),
+              ),
               SliverToBoxAdapter(child: _buildCardsSection(theme)),
               SliverToBoxAdapter(
                 child: Padding(
@@ -425,19 +610,40 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Recargar Saldo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Más energía para ti',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      //_buildQuickAmounts(theme),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final amount in [50, 100, 300])
+                            ActionChip(
+                              label: Text('Bs $amount'),
+                              onPressed: () =>
+                                  setState(() => amountCtrl.text = '$amount'),
+                            ),
+                        ],
+                      ),
                       //const SizedBox(height: 12),
                       _buildManualAmountField(theme),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: _initiateCheckout,
+                        onPressed: _checkingOut ? null : _initiateCheckout,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size.fromHeight(56),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text('IR A PAGAR (QR/TARJETA)', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Continuar al pago · QR / tarjeta',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                       const SizedBox(height: 32),
                     ],
@@ -470,7 +676,10 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           children: [
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text('Mis Tarjetas Físicas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                'Mis Tarjetas Físicas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             SizedBox(
               height: 168,
@@ -480,19 +689,32 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                 itemCount: tags.length,
                 itemBuilder: (context, i) {
                   final tag = Map<String, dynamic>.from(tags[i] as Map);
-                  final isActive = tag['is_active'] == true || tag['is_active'] == 1;
-                  final tagBalance = double.tryParse(tag['balance']?.toString() ?? '0') ?? 0.0;
+                  final isActive =
+                      tag['is_active'] == true || tag['is_active'] == 1;
+                  final tagBalance =
+                      double.tryParse(tag['balance']?.toString() ?? '0') ?? 0.0;
 
                   return Container(
                     width: 220,
-                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: isActive ? Colors.blue.shade200 : Colors.grey.shade300),
+                      border: Border.all(
+                        color: isActive
+                            ? Colors.blue.shade200
+                            : Colors.grey.shade300,
+                      ),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
                       ],
                     ),
                     child: Column(
@@ -500,19 +722,35 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.credit_card, color: isActive ? theme.primaryColor : Colors.grey, size: 20),
+                            Icon(
+                              Icons.credit_card,
+                              color: isActive
+                                  ? theme.primaryColor
+                                  : Colors.grey,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 tag['name']?.toString() ?? 'Tarjeta E2V',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             IconButton(
-                              onPressed: () => _showRenameDialog(tag['id'], tag['name']?.toString() ?? ''),
-                              icon: const Icon(Icons.edit, size: 16, color: Colors.grey),
+                              onPressed: () => _showRenameDialog(
+                                tag['id'],
+                                tag['name']?.toString() ?? '',
+                              ),
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                             ),
@@ -521,7 +759,11 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                         //const SizedBox(height: 2),
                         Text(
                           tag['tag_code']?.toString() ?? '000000',
-                          style: TextStyle(fontFamily: 'monospace', color: Colors.grey.shade700, fontSize: 11),
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            color: Colors.grey.shade700,
+                            fontSize: 11,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -532,10 +774,19 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Saldo', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                const Text(
+                                  'Saldo',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                                 Text(
                                   'Bs ${tagBalance.toStringAsFixed(2)}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -546,9 +797,14 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                         Align(
                           alignment: Alignment.centerRight,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+                              color: isActive
+                                  ? Colors.green.withValues(alpha: 0.1)
+                                  : Colors.red.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -578,34 +834,40 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     final controller = TextEditingController(text: currentName);
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: const Text('Identificar Tarjeta'),
-            content: TextField(
-              controller: controller,
-              decoration: const InputDecoration(labelText: 'Nombre o Alias', hintText: 'Ej: Camioneta Jorge'),
-              autofocus: true,
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('CANCELAR')),
-              FilledButton(
-                onPressed: () async {
-                  final navigator = Navigator.of(dialogContext);
-                  final messenger = ScaffoldMessenger.of(dialogContext);
-                  try {
-                    await widget.api.updateTag(tagId, controller.text);
-                    if (dialogContext.mounted) {
-                      navigator.pop();
-                      _reload();
-                    }
-                  } catch (e) {
-                    if (dialogContext.mounted) messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
-                  }
-                },
-                child: const Text('GUARDAR'),
-              ),
-            ],
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Identificar Tarjeta'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Nombre o Alias',
+            hintText: 'Ej: Camioneta Jorge',
           ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CANCELAR'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final navigator = Navigator.of(dialogContext);
+              final messenger = ScaffoldMessenger.of(dialogContext);
+              try {
+                await widget.api.updateTag(tagId, controller.text);
+                if (dialogContext.mounted) {
+                  navigator.pop();
+                  _reload();
+                }
+              } catch (e) {
+                if (dialogContext.mounted)
+                  messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
+              }
+            },
+            child: const Text('GUARDAR'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -613,103 +875,87 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     return FutureBuilder<Map<String, dynamic>>(
       future: _walletFuture,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          //return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red, fontSize: 12)));
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!context.mounted) return;
-            showAppToast(
-              context,
-              'Error de conexión al cargar el saldo. Por favor intente nuevamente en unos instantes.',
-              type: AppToastType.error,
-              duration: 5,
-            );
-          });
-        }
-
-        final data = snapshot.data ?? {};
-        final balance = double.tryParse(data['balance']?.toString() ?? '0') ?? 0.0;
-        final appBalance = double.tryParse(data['app_balance']?.toString() ?? balance.toString()) ?? balance;
-        final physicalBalance = double.tryParse(data['physical_balance']?.toString() ?? balance.toString()) ?? balance;
-
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        if (snapshot.hasError)
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const Text('No pudimos actualizar tu saldo.'),
+                TextButton(
+                  onPressed: () => _reload(),
+                  child: const Text('Reintentar'),
+                ),
+              ],
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: theme.primaryColor.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          );
+        final appBalance = double.tryParse(
+          snapshot.data?['app_balance']?.toString() ?? '',
+        );
+        final physicalBalance = double.tryParse(
+          snapshot.data?['physical_balance']?.toString() ?? '',
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const MaxVoltHeading(
+              'Energía para avanzar.',
+              eyebrow: 'Billetera MaxVolt',
+            ),
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.all(26),
+              decoration: BoxDecoration(
+                color: MaxVolt.night,
+                borderRadius: BorderRadius.circular(26),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Saldo Total', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                  const Text(
+                    'DISPONIBLE PARA CARGAR EN LA APP',
+                    style: TextStyle(
+                      color: MaxVolt.paper,
+                      fontSize: 11,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    appBalance == null
+                        ? 'Bs —'
+                        : 'Bs ${appBalance.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: MaxVolt.paper,
+                      fontSize: 44,
+                      letterSpacing: -2,
+                    ),
+                  ),
                   if (snapshot.connectionState == ConnectionState.waiting)
-                    const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Bs ${balance.toStringAsFixed(2)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              const Divider(color: Colors.white24, height: 1),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Saldo App',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
-                        ),
-                        Text(
-                          'Bs ${appBalance.toStringAsFixed(2)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: LinearProgressIndicator(color: MaxVolt.lime),
                     ),
-                  ),
-                  Container(width: 1, height: 30, color: Colors.white24),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Saldo Tarjetas',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
-                        ),
-                        Text(
-                          'Bs ${physicalBalance.toStringAsFixed(2)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Tu próximo impulso empieza aquí.',
+                    style: TextStyle(color: MaxVolt.paper),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.credit_card),
+              title: const Text('Tarjetas físicas'),
+              subtitle: const Text('Saldo independiente de la app'),
+              trailing: Text(
+                physicalBalance == null
+                    ? 'Bs —'
+                    : 'Bs ${physicalBalance.toStringAsFixed(2)}',
+              ),
+            ),
+          ],
         );
       },
     );
@@ -756,13 +1002,14 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     return TextField(
       controller: amountCtrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      onChanged: (v) => setState(() => selectedAmount = double.tryParse(v) ?? 0),
+      onChanged: (v) =>
+          setState(() => selectedAmount = double.tryParse(v) ?? 0),
       decoration: InputDecoration(
         prefixText: 'Bs ',
         labelText: 'Monto',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: theme.colorScheme.surface,
       ),
     );
   }
@@ -783,39 +1030,45 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             );
           });
         }
-        if (snapshot.connectionState == ConnectionState.waiting && !_isRefreshing) {
-          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !_isRefreshing) {
+          return const SliverToBoxAdapter(
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final list = (snapshot.data?['data'] as List?) ?? [];
         if (list.isEmpty) {
           return const SliverToBoxAdapter(
-            child: Center(child: Text('Sin movimientos recientes', style: TextStyle(color: Colors.grey))),
+            child: Center(
+              child: Text(
+                'Sin movimientos recientes',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
           );
         }
 
         // 1. RECARGAS PENDIENTES
-        final pendingRecharges =
-            list.where((item) {
-              final s = item['status']?.toString().toUpperCase() ?? '';
-              final t = item['type']?.toString().toUpperCase() ?? '';
-              return t == 'RECHARGE' && (s == 'PENDING' || s == 'PROCESSING' || s == '-' || s == '');
-            }).toList();
+        final pendingRecharges = list.where((item) {
+          final s = item['status']?.toString().toUpperCase() ?? '';
+          final t = item['type']?.toString().toUpperCase() ?? '';
+          return t == 'RECHARGE' &&
+              (s == 'PENDING' || s == 'PROCESSING' || s == '-' || s == '');
+        }).toList();
 
         // 2. RECARGAS EXITOSAS
-        final successfulRecharges =
-            list.where((item) {
-              final s = item['status']?.toString().toUpperCase() ?? '';
-              final t = item['type']?.toString().toUpperCase() ?? '';
-              return t == 'RECHARGE' && (s == 'COMPLETED' || s == 'SUCCESS');
-            }).toList();
+        final successfulRecharges = list.where((item) {
+          final s = item['status']?.toString().toUpperCase() ?? '';
+          final t = item['type']?.toString().toUpperCase() ?? '';
+          return t == 'RECHARGE' && (s == 'COMPLETED' || s == 'SUCCESS');
+        }).toList();
 
         // 3. DÉBITOS POR CARGA (Basado en el tipo 'CHARGE' de la DB)
-        final energyDebits =
-            list.where((item) {
-              final t = item['type']?.toString().toUpperCase() ?? '';
-              return t == 'CHARGE' || t == 'DEBIT' || t == 'CONSUMPTION';
-            }).toList();
+        final energyDebits = list.where((item) {
+          final t = item['type']?.toString().toUpperCase() ?? '';
+          return t == 'CHARGE' || t == 'DEBIT' || t == 'CONSUMPTION';
+        }).toList();
 
         return SliverPadding(
           padding: const EdgeInsets.all(16),
@@ -884,7 +1137,11 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 13,
+            letterSpacing: 0.5,
+          ),
         ),
         subtitle: Text(
           subtitle,
@@ -892,17 +1149,19 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           overflow: TextOverflow.ellipsis,
           style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
         ),
-        backgroundColor: Colors.white,
-        collapsedBackgroundColor: Colors.white,
-        children:
-            items.isEmpty
-                ? [
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text('No hay registros en esta sección', style: TextStyle(color: Colors.grey, fontSize: 12)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        collapsedBackgroundColor: Theme.of(context).colorScheme.surface,
+        children: items.isEmpty
+            ? [
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    'No hay registros en esta sección',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
-                ]
-                : items.map((item) => itemBuilder(item)).toList(),
+                ),
+              ]
+            : items.map((item) => itemBuilder(item)).toList(),
       ),
     );
   }
@@ -919,7 +1178,8 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
         confirmDismiss: (dir) async {
           if (dir == DismissDirection.startToEnd) {
             // Right
-            if (url.isNotEmpty) launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView);
+            if (url.isNotEmpty)
+              launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView);
             return false; // Don't remove from list yet
           } else {
             // Left
@@ -939,7 +1199,10 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.refresh, color: Colors.white),
-              Text('REINTENTAR', style: TextStyle(color: Colors.white, fontSize: 10)),
+              Text(
+                'REINTENTAR',
+                style: TextStyle(color: Colors.white, fontSize: 10),
+              ),
             ],
           ),
         ),
@@ -951,7 +1214,10 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.delete, color: Colors.white),
-              Text('ELIMINAR', style: TextStyle(color: Colors.white, fontSize: 10)),
+              Text(
+                'ELIMINAR',
+                style: TextStyle(color: Colors.white, fontSize: 10),
+              ),
             ],
           ),
         ),
@@ -959,21 +1225,35 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
           margin: const EdgeInsets.only(bottom: 8),
           elevation: 0,
           color: Colors.orange.shade50,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.orange.shade200)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.orange.shade200),
+          ),
           child: ListTile(
-            leading: const CircleAvatar(backgroundColor: Colors.orange, child: Icon(Icons.timer_outlined, color: Colors.white)),
+            leading: const CircleAvatar(
+              backgroundColor: Colors.orange,
+              child: Icon(Icons.timer_outlined, color: Colors.white),
+            ),
             title: const Text(
               'Recarga Pendiente',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text('ID: ${tx['id']}', maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: Text(
+              'ID: ${tx['id']}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             trailing: Text(
               'Bs ${amount.toStringAsFixed(2)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.orange),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.orange,
+              ),
             ),
           ),
         ),
@@ -987,13 +1267,18 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     try {
       final tx = Map<String, dynamic>.from(item as Map);
       final amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0.0;
-      final date = DateTime.tryParse(tx['created_at']?.toString() ?? '') ?? DateTime.now();
+      final date =
+          DateTime.tryParse(tx['created_at']?.toString() ?? '') ??
+          DateTime.now();
       final invoiceUrl = tx['invoice_url']?.toString();
 
       return Column(
         children: [
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
             leading: CircleAvatar(
               backgroundColor: Colors.green.withValues(alpha: 0.1),
               child: const Icon(Icons.add, color: Colors.green),
@@ -1011,7 +1296,12 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
               style: const TextStyle(fontSize: 11),
             ),
             trailing: SizedBox(
-              width: invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http') ? 120 : 76,
+              width:
+                  invoiceUrl != null &&
+                      invoiceUrl.isNotEmpty &&
+                      invoiceUrl.contains('http')
+                  ? 120
+                  : 76,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
@@ -1021,13 +1311,26 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                       'Bs ${amount.toStringAsFixed(2)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.green),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.green,
+                      ),
                     ),
                   ),
-                  if (invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http'))
+                  if (invoiceUrl != null &&
+                      invoiceUrl.isNotEmpty &&
+                      invoiceUrl.contains('http'))
                     IconButton(
-                      icon: const Icon(Icons.visibility, color: Color(0xFF0076D6), size: 20),
-                      onPressed: () => launchUrl(Uri.parse(invoiceUrl), mode: LaunchMode.externalApplication),
+                      icon: const Icon(
+                        Icons.visibility,
+                        color: Color(0xFF03624C),
+                        size: 20,
+                      ),
+                      onPressed: () => launchUrl(
+                        Uri.parse(invoiceUrl),
+                        mode: LaunchMode.externalApplication,
+                      ),
                       tooltip: 'Ver Factura',
                     ),
                 ],
@@ -1046,13 +1349,18 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
     try {
       final tx = Map<String, dynamic>.from(item as Map);
       final amount = double.tryParse(tx['amount']?.toString() ?? '0') ?? 0.0;
-      final date = DateTime.tryParse(tx['created_at']?.toString() ?? '') ?? DateTime.now();
+      final date =
+          DateTime.tryParse(tx['created_at']?.toString() ?? '') ??
+          DateTime.now();
       final invoiceUrl = tx['invoice_url']?.toString();
 
       return Column(
         children: [
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
             leading: CircleAvatar(
               backgroundColor: Colors.red.withValues(alpha: 0.1),
               child: const Icon(Icons.remove, color: Colors.red),
@@ -1070,7 +1378,12 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
               style: const TextStyle(fontSize: 11),
             ),
             trailing: SizedBox(
-              width: invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http') ? 120 : 76,
+              width:
+                  invoiceUrl != null &&
+                      invoiceUrl.isNotEmpty &&
+                      invoiceUrl.contains('http')
+                  ? 120
+                  : 76,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
@@ -1080,13 +1393,26 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
                       'Bs ${amount.toStringAsFixed(2)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.red),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.red,
+                      ),
                     ),
                   ),
-                  if (invoiceUrl != null && invoiceUrl.isNotEmpty && invoiceUrl.contains('http'))
+                  if (invoiceUrl != null &&
+                      invoiceUrl.isNotEmpty &&
+                      invoiceUrl.contains('http'))
                     IconButton(
-                      icon: const Icon(Icons.visibility, color: Color(0xFF0076D6), size: 20),
-                      onPressed: () => launchUrl(Uri.parse(invoiceUrl), mode: LaunchMode.externalApplication),
+                      icon: const Icon(
+                        Icons.visibility,
+                        color: Color(0xFF03624C),
+                        size: 20,
+                      ),
+                      onPressed: () => launchUrl(
+                        Uri.parse(invoiceUrl),
+                        mode: LaunchMode.externalApplication,
+                      ),
                       tooltip: 'Ver Factura',
                     ),
                 ],
@@ -1104,18 +1430,25 @@ class _WalletPageState extends ConsumerState<WalletPage> with WidgetsBindingObse
   Future<bool> _showConfirmDelete() async {
     return await showDialog(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Eliminar Pendiente'),
-                content: const Text('¿Estás seguro de que deseas eliminar esta recarga pendiente?'),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('ELIMINAR', style: TextStyle(color: Colors.red)),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('Eliminar Pendiente'),
+            content: const Text(
+              '¿Estás seguro de que deseas eliminar esta recarga pendiente?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('CANCELAR'),
               ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'ELIMINAR',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
         ) ??
         false;
   }

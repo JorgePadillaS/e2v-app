@@ -117,7 +117,7 @@ flutter:
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
-  image_path: "assets/logo.png"
+  image_path: "assets/maxvolt_symbol.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#0076D6"
-  adaptive_icon_foreground: "assets/logo.png"
+  adaptive_icon_background: "#032221"
+  adaptive_icon_foreground: "assets/maxvolt_symbol.png"

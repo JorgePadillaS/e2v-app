@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../../../core/config/app_config.dart';
 
 class MobileApi {
@@ -91,12 +92,13 @@ class MobileApi {
   }
 
   Future<Map<String, dynamic>> sessions() async {
-    try {
-      final res = await _dio.get('sessions');
-      return Map<String, dynamic>.from(res.data as Map);
-    } on Exception catch (_) {
-      return Map<String, dynamic>.from({});
-    }
+    final res = await _dio.get('sessions');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>> session(int id) async {
+    final res = await _dio.get('sessions/$id');
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
   Future<Map<String, dynamic>> startStation(int stationId, {int? connectorId, int? vehicleId}) async {

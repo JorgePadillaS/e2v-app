@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../../../core/ui/app_toast.dart';
 import '../../../core/config/branding_provider.dart';
 import '../application/auth_controller.dart';
@@ -21,7 +22,8 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
   @override
   void initState() {
     super.initState();
-    final token = ref.read(authControllerProvider).value?['token']?.toString() ?? '';
+    final token =
+        ref.read(authControllerProvider).value?['token']?.toString() ?? '';
     _api = MobileApi(token);
     _loadVehicles();
   }
@@ -38,7 +40,11 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
       }
     } catch (e) {
       if (mounted) {
-        showAppToast(context, 'No se pudieron cargar los vehículos: ${e.toString()}', type: AppToastType.error);
+        showAppToast(
+          context,
+          'No se pudieron cargar los vehículos: ${e.toString()}',
+          type: AppToastType.error,
+        );
         setState(() => _isLoading = false);
       }
     }
@@ -47,21 +53,23 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
   Future<void> _deleteVehicle(int vehicleId) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('¿Eliminar vehículo?'),
-            content: const Text(
-              '¿Estás seguro de que deseas eliminar este vehículo de tu cuenta? Esta acción no afectará a los reportes de las cargas pasadas ya realizadas.',
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Eliminar de todas formas'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar vehículo?'),
+        content: const Text(
+          '¿Estás seguro de que deseas eliminar este vehículo de tu cuenta? Esta acción no afectará a los reportes de las cargas pasadas ya realizadas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar de todas formas'),
+          ),
+        ],
+      ),
     );
 
     if (confirm != true || !mounted) return;
@@ -70,12 +78,20 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
     try {
       await _api.deleteVehicle(vehicleId);
       if (mounted) {
-        showAppToast(context, 'Vehículo eliminado correctamente.', type: AppToastType.success);
+        showAppToast(
+          context,
+          'Vehículo eliminado correctamente.',
+          type: AppToastType.success,
+        );
         _loadVehicles();
       }
     } catch (e) {
       if (mounted) {
-        showAppToast(context, 'Error al eliminar vehículo: ${e.toString()}', type: AppToastType.error);
+        showAppToast(
+          context,
+          'Error al eliminar vehículo: ${e.toString()}',
+          type: AppToastType.error,
+        );
         setState(() => _isLoading = false);
       }
     }
@@ -85,41 +101,50 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder:
-          (context) => _AddVehicleForm(
-            api: _api,
-            onSuccess: () {
-              Navigator.pop(context);
-              _loadVehicles();
-            },
-          ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => _AddVehicleForm(
+        api: _api,
+        onSuccess: () {
+          Navigator.pop(context);
+          _loadVehicles();
+        },
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final branding = ref.watch(brandingProvider).value;
-    final primaryColor = branding?.branding.primaryColor ?? Theme.of(context).primaryColor;
+    final primaryColor =
+        branding?.branding.primaryColor ?? Theme.of(context).primaryColor;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis Vehículos', style: TextStyle(fontWeight: FontWeight.bold))),
+      appBar: AppBar(
+        title: const Text(
+          'Mis Vehículos',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: _loadVehicles,
-        child:
-            _isLoading && _vehicles.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : _vehicles.isEmpty
-                ? _buildEmptyState(primaryColor)
-                : _buildVehicleList(primaryColor),
+        child: _isLoading && _vehicles.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : _vehicles.isEmpty
+            ? _buildEmptyState(primaryColor)
+            : _buildVehicleList(primaryColor),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddVehicleModal,
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(LucideIcons.plus),
-        label: const Text('Agregar Vehículo', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Agregar Vehículo',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
@@ -136,14 +161,21 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(LucideIcons.car, size: 72, color: primaryColor),
             ),
             const SizedBox(height: 24),
             const Text(
               'No tienes vehículos registrados',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF333333),
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -157,12 +189,20 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
               icon: const Icon(LucideIcons.plus, color: Colors.white),
               label: const Text(
                 'Registrar mi primer vehículo',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -181,13 +221,17 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
         final String model = vehicle['model']?.toString() ?? '';
         final String plate = vehicle['plate']?.toString() ?? 'SIN PLACA';
         final String? vin = vehicle['vin']?.toString();
-        final double? batteryCapacity =
-            vehicle['battery_capacity'] != null ? double.tryParse(vehicle['battery_capacity'].toString()) : null;
+        final double? batteryCapacity = vehicle['battery_capacity'] != null
+            ? double.tryParse(vehicle['battery_capacity'].toString())
+            : null;
 
         return Card(
           elevation: 2,
           margin: const EdgeInsets.only(bottom: 16.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey.shade200)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -195,7 +239,10 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Icon(LucideIcons.car, color: primaryColor, size: 32),
                 ),
                 const SizedBox(width: 16),
@@ -205,16 +252,26 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                     children: [
                       Text(
                         '$brand $model',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       // Beautiful Bolivian Plate Mockup
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF7F9FC),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
                         ),
                         child: Text(
                           plate,
@@ -230,9 +287,19 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(LucideIcons.batteryCharging, size: 14, color: Colors.grey),
+                            const Icon(
+                              LucideIcons.batteryCharging,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 4),
-                            Text('Capacidad: $batteryCapacity kWh', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                            Text(
+                              'Capacidad: $batteryCapacity kWh',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -240,12 +307,19 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(LucideIcons.fingerprint, size: 14, color: Colors.grey),
+                            const Icon(
+                              LucideIcons.fingerprint,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 'VIN: $vin',
-                                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -257,7 +331,11 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                 ),
                 IconButton(
                   onPressed: () => _deleteVehicle(vehicle['id'] as int),
-                  icon: const Icon(LucideIcons.trash2, color: Colors.redAccent, size: 20),
+                  icon: const Icon(
+                    LucideIcons.trash2,
+                    color: Colors.redAccent,
+                    size: 20,
+                  ),
                 ),
               ],
             ),
@@ -300,34 +378,53 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final cleanedPlate = _plateController.text.trim().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toUpperCase();
+    final cleanedPlate = _plateController.text
+        .trim()
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+        .toUpperCase();
     final plateRegex = RegExp(r'^[0-9]{3,4}[A-Z]{3}$');
 
     if (!plateRegex.hasMatch(cleanedPlate)) {
-      showAppToast(context, 'Formato de placa inválido. Debe ser como 123ABC o 1234ABC.', type: AppToastType.error);
+      showAppToast(
+        context,
+        'Formato de placa inválido. Debe ser como 123ABC o 1234ABC.',
+        type: AppToastType.error,
+      );
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final double? capacity = _batteryController.text.isNotEmpty ? double.tryParse(_batteryController.text) : null;
+      final double? capacity = _batteryController.text.isNotEmpty
+          ? double.tryParse(_batteryController.text)
+          : null;
 
       await widget.api.addVehicle(
         brand: _brandController.text.trim(),
         model: _modelController.text.trim(),
         plate: cleanedPlate,
-        vin: _vinController.text.trim().isNotEmpty ? _vinController.text.trim() : null,
+        vin: _vinController.text.trim().isNotEmpty
+            ? _vinController.text.trim()
+            : null,
         batteryCapacity: capacity,
       );
 
       if (mounted) {
-        showAppToast(context, 'Vehículo registrado exitosamente.', type: AppToastType.success);
+        showAppToast(
+          context,
+          'Vehículo registrado exitosamente.',
+          type: AppToastType.success,
+        );
         widget.onSuccess();
       }
     } catch (e) {
       if (mounted) {
-        showAppToast(context, 'Error al registrar vehículo: ${e.toString()}', type: AppToastType.error);
+        showAppToast(
+          context,
+          'Error al registrar vehículo: ${e.toString()}',
+          type: AppToastType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -339,10 +436,16 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
   @override
   Widget build(BuildContext context) {
     final branding = ref.watch(brandingProvider).value;
-    final primaryColor = branding?.branding.primaryColor ?? Theme.of(context).primaryColor;
+    final primaryColor =
+        branding?.branding.primaryColor ?? Theme.of(context).primaryColor;
 
     return Container(
-      padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -355,9 +458,16 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
                 children: [
                   const Text(
                     'Registrar Vehículo',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF333333),
+                    ),
                   ),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(LucideIcons.x)),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(LucideIcons.x),
+                  ),
                 ],
               ),
               const Divider(),
@@ -370,7 +480,8 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
                   hintText: 'Ej. Tesla, BYD, Nissan, Toyota',
                   prefixIcon: Icon(LucideIcons.tag),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'La marca es requerida' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'La marca es requerida' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -381,7 +492,8 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
                   hintText: 'Ej. Model 3, Song Plus, Leaf',
                   prefixIcon: Icon(LucideIcons.car),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'El modelo es requerido' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'El modelo es requerido' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -394,7 +506,10 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'La placa es requerida';
-                  final cleaned = v.trim().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toUpperCase();
+                  final cleaned = v
+                      .trim()
+                      .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+                      .toUpperCase();
                   final plateRegex = RegExp(r'^[0-9]{3,4}[A-Z]{3}$');
                   if (!plateRegex.hasMatch(cleaned)) {
                     return 'Formato boliviano inválido (ej: 1234ABC)';
@@ -405,7 +520,9 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _batteryController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Capacidad de Batería (kWh) - Opcional',
                   hintText: 'Ej. 60.5',
@@ -430,19 +547,27 @@ class _AddVehicleFormState extends ConsumerState<_AddVehicleForm> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child:
-                      _isSubmitting
-                          ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                          )
-                          : const Text(
-                            'Registrar Vehículo',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
                           ),
+                        )
+                      : const Text(
+                          'Registrar Vehículo',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
               ),
             ],

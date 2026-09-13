@@ -1,26 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/ui/maxvolt_theme.dart';
+
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
-
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Hero(tag: 'app_logo', child: Image.asset('assets/logo_leyenda.png', width: 250)),
-            const SizedBox(height: 48),
-            const SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0076D6))),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => const Scaffold(
+    backgroundColor: MaxVolt.forest,
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MaxVoltLogo(width: 250),
+          SizedBox(height: 48),
+          CircularProgressIndicator(color: MaxVolt.lime),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }

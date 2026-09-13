@@ -1,11 +1,15 @@
 import '../application/auth_controller.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../../../core/ui/app_toast.dart';
 import '../../../core/config/branding_provider.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
 import 'vehicles_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -104,19 +108,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('¿Cerrar sesión?'),
-            content: const Text('¿Estás seguro de que deseas cerrar tu sesión en esta cuenta?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Cerrar Sesión'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cerrar sesión?'),
+        content: const Text('¿Estás seguro de que deseas cerrar tu sesión en esta cuenta?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Cerrar Sesión'),
           ),
+        ],
+      ),
     );
 
     if (confirm != true || !mounted) return;
@@ -256,15 +259,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancelar'),
-                ),
+                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
                 TextButton(
                   onPressed: canDelete ? () => Navigator.pop(context, true) : null,
-                  style: TextButton.styleFrom(
-                    foregroundColor: canDelete ? Colors.red : Colors.grey,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: canDelete ? Colors.red : Colors.grey),
                   child: const Text('Eliminar de todas formas'),
                 ),
               ],
@@ -308,17 +306,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         appBar: AppBar(
           title: Text(_isEditing ? 'Editar Perfil' : 'Mi Perfil'),
           leading: _isEditing
-              ? IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: _isLoading ? null : _cancelEditing,
-                )
+              ? IconButton(icon: const Icon(Icons.close), onPressed: _isLoading ? null : _cancelEditing)
               : null,
           actions: [
             if (_isEditing)
               if (_isLoading)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                  child: Center(
+                    child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
                 )
               else
                 IconButton(onPressed: _save, icon: const Icon(LucideIcons.check))
@@ -337,7 +334,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Datos Personales', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Datos Personales',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _nameController,
@@ -361,7 +361,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 TextFormField(
                   controller: _nitController,
                   enabled: !_isLoading && _isEditing,
-                  decoration: const InputDecoration(labelText: 'Documento / NIT', prefixIcon: Icon(LucideIcons.fileText)),
+                  decoration: const InputDecoration(
+                    labelText: 'Documento / NIT',
+                    prefixIcon: Icon(LucideIcons.fileText),
+                  ),
                   keyboardType: TextInputType.number,
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
@@ -384,14 +387,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   decoration: const InputDecoration(labelText: 'Razón Social', prefixIcon: Icon(LucideIcons.building)),
                 ),
                 const SizedBox(height: 32),
-                Text('Mis Vehículos', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Mis Vehículos',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Card(
                   elevation: 0,
-                  color: Colors.grey.shade50,
+                  color: Theme.of(context).colorScheme.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey.shade200),
+                    side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                   child: ListTile(
                     title: const Text('Administrar Vehículos', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -408,19 +414,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text('Seguridad', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Seguridad',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
                   enabled: !_isLoading && _isEditing,
-                  decoration: const InputDecoration(labelText: 'Nueva Contraseña (Opcional)', prefixIcon: Icon(LucideIcons.lock)),
+                  decoration: const InputDecoration(
+                    labelText: 'Nueva Contraseña (Opcional)',
+                    prefixIcon: Icon(LucideIcons.lock),
+                  ),
                   obscureText: true,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordConfirmController,
                   enabled: !_isLoading && _isEditing,
-                  decoration: const InputDecoration(labelText: 'Confirmar Nueva Contraseña', prefixIcon: Icon(LucideIcons.lock)),
+                  decoration: const InputDecoration(
+                    labelText: 'Confirmar Nueva Contraseña',
+                    prefixIcon: Icon(LucideIcons.lock),
+                  ),
                   obscureText: true,
                 ),
                 const SizedBox(height: 32),
@@ -429,10 +444,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 if (_isEditing) ...[
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _save,
-                      child: const Text('Guardar Cambios'),
-                    ),
+                    child: ElevatedButton(onPressed: _isLoading ? null : _save, child: const Text('Guardar Cambios')),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -467,7 +479,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: _isLoading ? null : _deleteAccount,
-                      style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                      ),
                       child: const Text('Eliminar Cuenta (GDPR)'),
                     ),
                   ),
@@ -497,7 +512,10 @@ class _LegalSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Información Legal', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'Información Legal',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 16),
         ListTile(
           contentPadding: EdgeInsets.zero,

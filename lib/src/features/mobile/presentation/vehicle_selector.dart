@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../../../core/config/branding_provider.dart';
 import '../../auth/application/auth_controller.dart';
 import '../data/mobile_api.dart';
@@ -13,14 +14,17 @@ class VehicleSelectorSheet extends ConsumerStatefulWidget {
     return await showModalBottomSheet<int?>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) => const VehicleSelectorSheet(),
     );
   }
 
   @override
-  ConsumerState<VehicleSelectorSheet> createState() => _VehicleSelectorSheetState();
+  ConsumerState<VehicleSelectorSheet> createState() =>
+      _VehicleSelectorSheetState();
 }
 
 class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
@@ -33,7 +37,8 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
   @override
   void initState() {
     super.initState();
-    final token = ref.read(authControllerProvider).value?['token']?.toString() ?? '';
+    final token =
+        ref.read(authControllerProvider).value?['token']?.toString() ?? '';
     _api = MobileApi(token);
     _loadVehicles();
   }
@@ -60,7 +65,8 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'No se pudieron cargar los vehículos. Por favor, reintenta.';
+          _errorMessage =
+              'No se pudieron cargar los vehículos. Por favor, reintenta.';
         });
       }
     }
@@ -69,12 +75,21 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
   @override
   Widget build(BuildContext context) {
     final branding = ref.watch(brandingProvider).value;
-    final primaryColor = branding?.branding.primaryColor ?? Theme.of(context).primaryColor;
-    final mustHaveVehicle = branding?.policies.restrictChargingWithoutVehicle ?? false;
+    final primaryColor =
+        branding?.branding.primaryColor ?? Theme.of(context).primaryColor;
+    final mustHaveVehicle =
+        branding?.policies.restrictChargingWithoutVehicle ?? false;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
-      padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,32 +99,54 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
             children: [
               const Text(
                 'Selecciona tu Vehículo',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF333333),
+                ),
               ),
-              IconButton(onPressed: () => Navigator.pop(context, null), icon: const Icon(LucideIcons.x)),
+              IconButton(
+                onPressed: () => Navigator.pop(context, null),
+                icon: const Icon(LucideIcons.x),
+              ),
             ],
           ),
           const Divider(),
           const SizedBox(height: 16),
           if (_isLoading)
-            const Padding(padding: EdgeInsets.symmetric(vertical: 48.0), child: Center(child: CircularProgressIndicator()))
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48.0),
+              child: Center(child: CircularProgressIndicator()),
+            )
           else if (_errorMessage != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: Column(
                 children: [
-                  const Icon(LucideIcons.alertTriangle, color: Colors.redAccent, size: 48),
+                  const Icon(
+                    LucideIcons.alertTriangle,
+                    color: Colors.redAccent,
+                    size: 48,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     _errorMessage!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadVehicles,
-                    style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-                    child: const Text('Reintentar', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                    ),
+                    child: const Text(
+                      'Reintentar',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -131,7 +168,11 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                   children: [
                     const Text(
                       'Para cumplir con impuestos nacionales, registraremos los datos de facturación y placa de tu vehículo en esta carga.',
-                      style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Flexible(
@@ -154,24 +195,43 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? primaryColor.withValues(alpha: 0.04) : Colors.white,
+                                    color: isSelected
+                                        ? Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer
+                                        : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: isSelected ? primaryColor : Colors.grey.shade200,
+                                      color: isSelected
+                                          ? primaryColor
+                                          : Colors.grey.shade200,
                                       width: isSelected ? 2 : 1,
                                     ),
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(LucideIcons.minusCircle, color: isSelected ? primaryColor : Colors.grey, size: 24),
+                                      Icon(
+                                        LucideIcons.minusCircle,
+                                        color: isSelected
+                                            ? primaryColor
+                                            : Colors.grey,
+                                        size: 24,
+                                      ),
                                       const SizedBox(width: 16),
                                       const Expanded(
                                         child: Text(
                                           'Continuar sin vehículo',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF333333)),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Color(0xFF333333),
+                                          ),
                                         ),
                                       ),
-                                      Radio<int?>(value: null, activeColor: primaryColor),
+                                      Radio<int?>(
+                                        value: null,
+                                        activeColor: primaryColor,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -181,9 +241,12 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
 
                           final vehicle = _vehicles[index];
                           final id = vehicle['id'] as int;
-                          final String brand = vehicle['brand']?.toString() ?? '';
-                          final String model = vehicle['model']?.toString() ?? '';
-                          final String plate = vehicle['plate']?.toString() ?? '';
+                          final String brand =
+                              vehicle['brand']?.toString() ?? '';
+                          final String model =
+                              vehicle['model']?.toString() ?? '';
+                          final String plate =
+                              vehicle['plate']?.toString() ?? '';
                           final isSelected = _selectedVehicleId == id;
 
                           return Padding(
@@ -198,10 +261,16 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? primaryColor.withValues(alpha: 0.04) : Colors.white,
+                                  color: isSelected
+                                      ? Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                      : Theme.of(context).colorScheme.surface,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: isSelected ? primaryColor : Colors.grey.shade200,
+                                    color: isSelected
+                                        ? primaryColor
+                                        : Colors.grey.shade200,
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
@@ -210,19 +279,26 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                                     Container(
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
-                                        color: isSelected ? primaryColor.withValues(alpha: 0.1) : Colors.grey.shade100,
+                                        color: isSelected
+                                            ? primaryColor.withValues(
+                                                alpha: 0.1,
+                                              )
+                                            : Colors.grey.shade100,
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
                                         LucideIcons.car,
-                                        color: isSelected ? primaryColor : Colors.grey.shade700,
+                                        color: isSelected
+                                            ? primaryColor
+                                            : Colors.grey.shade700,
                                         size: 24,
                                       ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             '$brand $model',
@@ -234,11 +310,17 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                                           ),
                                           const SizedBox(height: 6),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFF1F5F9),
-                                              borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(color: Colors.grey.shade300),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
+                                              ),
                                             ),
                                             child: Text(
                                               plate,
@@ -253,7 +335,10 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                                         ],
                                       ),
                                     ),
-                                    Radio<int?>(value: id, activeColor: primaryColor),
+                                    Radio<int?>(
+                                      value: id,
+                                      activeColor: primaryColor,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -268,11 +353,26 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                       children: [
                         TextButton.icon(
                           onPressed: () async {
-                            await Navigator.push(context, MaterialPageRoute(builder: (context) => const VehiclesScreen()));
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const VehiclesScreen(),
+                              ),
+                            );
                             _loadVehicles();
                           },
-                          icon: Icon(LucideIcons.plusCircle, color: primaryColor, size: 18),
-                          label: Text('Agregar nuevo', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                          icon: Icon(
+                            LucideIcons.plusCircle,
+                            color: primaryColor,
+                            size: 18,
+                          ),
+                          label: Text(
+                            'Agregar nuevo',
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         ElevatedButton(
                           onPressed: () {
@@ -280,12 +380,21 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           child: const Text(
                             'Confirmar',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ],
@@ -307,7 +416,9 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: mustHaveVehicle ? Colors.orange.shade50 : Colors.blue.shade50,
+              color: mustHaveVehicle
+                  ? Colors.orange.shade50
+                  : Colors.blue.shade50,
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -319,7 +430,11 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
           const SizedBox(height: 16),
           Text(
             mustHaveVehicle ? 'Vehículo Requerido' : 'Sin Vehículos',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF333333),
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -327,24 +442,51 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
                 ? 'El sistema tiene restringido iniciar cargas sin registrar un vehículo. De acuerdo con Impuestos Nacionales, se debe registrar la placa antes de suministrar energía.'
                 : 'No tienes vehículos registrados en tu cuenta para esta carga. Puedes registrar uno ahora o continuar sin él.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey, height: 1.5, fontSize: 14),
+            style: const TextStyle(
+              color: Colors.grey,
+              height: 1.5,
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              TextButton(onPressed: () => Navigator.pop(context, null), child: const Text('Cancelar')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: const Text('Cancelar'),
+              ),
               ElevatedButton.icon(
                 onPressed: () async {
-                  await Navigator.push(context, MaterialPageRoute(builder: (context) => const VehiclesScreen()));
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const VehiclesScreen(),
+                    ),
+                  );
                   _loadVehicles();
                 },
-                icon: const Icon(LucideIcons.plus, color: Colors.white, size: 18),
-                label: const Text('Registrar Vehículo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                icon: const Icon(
+                  LucideIcons.plus,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Registrar Vehículo',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -352,8 +494,12 @@ class _VehicleSelectorSheetState extends ConsumerState<VehicleSelectorSheet> {
           if (!mustHaveVehicle) ...[
             const SizedBox(height: 16),
             TextButton(
-              onPressed: () => Navigator.pop(context, -1), // Special code for no vehicle
-              child: const Text('Continuar sin registrar vehículo', style: TextStyle(color: Colors.grey)),
+              onPressed: () =>
+                  Navigator.pop(context, -1), // Special code for no vehicle
+              child: const Text(
+                'Continuar sin registrar vehículo',
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
           ],
         ],
