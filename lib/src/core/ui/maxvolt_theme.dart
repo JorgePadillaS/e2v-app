@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((ref) => ThemeModeController());
+final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>(
+  (ref) => ThemeModeController(),
+);
 
 class ThemeModeController extends StateNotifier<ThemeMode> {
   ThemeModeController() : super(ThemeMode.system) {
@@ -14,7 +16,10 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
     try {
       final value = await _storage.read(key: 'maxvolt.theme');
       if (mounted && !_changed)
-        state = ThemeMode.values.firstWhere((m) => m.name == value, orElse: () => ThemeMode.system);
+        state = ThemeMode.values.firstWhere(
+          (m) => m.name == value,
+          orElse: () => ThemeMode.system,
+        );
     } catch (_) {}
   }
 
@@ -35,16 +40,24 @@ abstract final class MaxVolt {
       paper = Color(0xFFF2F9F3);
   static ThemeData theme(Brightness brightness) {
     final dark = brightness == Brightness.dark;
-    final scheme = ColorScheme.fromSeed(seedColor: forest, brightness: brightness).copyWith(
-      primary: dark ? lime : forest,
-      onPrimary: dark ? night : paper,
-      secondary: mint,
-      onSecondary: night,
-      surface: dark ? const Color(0xFF103B33) : Colors.white,
-      onSurface: dark ? paper : night,
-      surfaceContainerHighest: dark ? const Color(0xFF184A3C) : const Color(0xFFE4F1E7),
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: forest,
+          brightness: brightness,
+        ).copyWith(
+          primary: dark ? lime : forest,
+          onPrimary: dark ? night : paper,
+          secondary: mint,
+          onSecondary: night,
+          surface: dark ? const Color(0xFF103B33) : Colors.white,
+          onSurface: dark ? paper : night,
+          surfaceContainerHighest: dark
+              ? const Color(0xFF184A3C)
+              : const Color(0xFFE4F1E7),
+        );
+    final rounded = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18),
     );
-    final rounded = RoundedRectangleBorder(borderRadius: BorderRadius.circular(18));
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -56,7 +69,12 @@ abstract final class MaxVolt {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
-      cardTheme: CardThemeData(color: scheme.surface, elevation: 0, margin: EdgeInsets.zero, shape: rounded),
+      cardTheme: CardThemeData(
+        color: scheme.surface,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: rounded,
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: lime,
@@ -75,11 +93,19 @@ abstract final class MaxVolt {
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(minimumSize: const Size(48, 52), shape: rounded),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(48, 52),
+          shape: rounded,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surface,
+        labelStyle: TextStyle(color: scheme.onSurfaceVariant),
+        floatingLabelStyle: TextStyle(color: scheme.primary),
+        hintStyle: TextStyle(color: scheme.onSurfaceVariant),
+        prefixStyle: TextStyle(color: scheme.onSurface),
+        suffixStyle: TextStyle(color: scheme.onSurface),
         contentPadding: const EdgeInsets.all(18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -109,7 +135,12 @@ class MaxVoltLogo extends StatelessWidget {
           alignment: Alignment.center,
           maxWidth: width,
           maxHeight: width,
-          child: Image.asset('assets/maxvolt_wordmark.png', width: width, height: width, excludeFromSemantics: true),
+          child: Image.asset(
+            'assets/maxvolt_wordmark.png',
+            width: width,
+            height: width,
+            excludeFromSemantics: true,
+          ),
         ),
       ),
     ),
@@ -125,11 +156,16 @@ class MaxVoltHeading extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       if (eyebrow != null)
-        Text(eyebrow!.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 1.8)),
+        Text(
+          eyebrow!.toUpperCase(),
+          style: Theme.of(context).textTheme.labelSmall
+              ?.copyWith(letterSpacing: 1.8),
+        ),
       const SizedBox(height: 8),
       Text(
         title,
-        style: Theme.of(context).textTheme.headlineMedium?.copyWith(letterSpacing: -1.2, fontWeight: FontWeight.w500),
+        style: Theme.of(context).textTheme.headlineMedium
+            ?.copyWith(letterSpacing: -1.2, fontWeight: FontWeight.w500),
       ),
       if (subtitle != null)
         Padding(
