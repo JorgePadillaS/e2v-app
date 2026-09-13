@@ -22,9 +22,9 @@ class BrandingConfig {
   factory BrandingConfig.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>;
     return BrandingConfig(
-      platformName: data['platform_name'] ?? 'E2V App',
-      logoUrl: data['logo_url'],
-      branding: BrandingColors.fromJson(data['branding']),
+      platformName: 'MaxVolt',
+      logoUrl: null,
+      branding: fallback.branding,
       legal: LegalConfig.fromJson(data['legal']),
       promotions: (data['promotions'] as List).map((p) => Promotion.fromJson(p)).toList(),
       policies: BusinessPolicies.fromJson(data['policies'] ?? {}),
@@ -33,12 +33,12 @@ class BrandingConfig {
 
   // Default config for fallback
   static BrandingConfig get fallback => BrandingConfig(
-    platformName: 'E2V App',
+    platformName: 'MaxVolt',
     branding: BrandingColors(
-      primaryColor: const Color(0xFF0076D6),
-      secondaryColor: const Color(0xFF0E4A7B),
-      buttonColor: const Color(0xFF0076D6),
-      textColor: const Color(0xFF333333),
+      primaryColor: const Color(0xFF03624C),
+      secondaryColor: const Color(0xFF2CC295),
+      buttonColor: const Color(0xFF03624C),
+      textColor: const Color(0xFF032221),
       fontFamily: 'Manrope',
     ),
     legal: LegalConfig(disclaimerUrl: AppConfig.disclaimerUrl, isDisclaimerVisible: true),
@@ -88,10 +88,10 @@ class BrandingColors {
 
   factory BrandingColors.fromJson(Map<String, dynamic> json) {
     return BrandingColors(
-      primaryColor: _parseColor(json['primary_color'], const Color(0xFF0076D6)),
-      secondaryColor: _parseColor(json['secondary_color'], const Color(0xFF0E4A7B)),
-      buttonColor: _parseColor(json['button_color'], const Color(0xFF0076D6)),
-      textColor: _parseColor(json['text_color'], const Color(0xFF333333)),
+      primaryColor: _parseColor(json['primary_color'], const Color(0xFF03624C)),
+      secondaryColor: _parseColor(json['secondary_color'], const Color(0xFF2CC295)),
+      buttonColor: _parseColor(json['button_color'], const Color(0xFF03624C)),
+      textColor: _parseColor(json['text_color'], const Color(0xFF032221)),
       fontFamily: json['font_family'] ?? 'Manrope',
     );
   }
@@ -116,7 +116,10 @@ class LegalConfig {
   LegalConfig({required this.disclaimerUrl, required this.isDisclaimerVisible});
 
   factory LegalConfig.fromJson(Map<String, dynamic> json) {
-    return LegalConfig(disclaimerUrl: json['disclaimer_url'] ?? '', isDisclaimerVisible: json['is_disclaimer_visible'] ?? false);
+    return LegalConfig(
+      disclaimerUrl: json['disclaimer_url'] ?? '',
+      isDisclaimerVisible: json['is_disclaimer_visible'] ?? false,
+    );
   }
 }
 

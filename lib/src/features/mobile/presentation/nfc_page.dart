@@ -1,4 +1,9 @@
+import 'sessions_page.dart';
+import '../../../core/ui/maxvolt_theme.dart';
+import 'live_charge_view.dart';
+
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import '../../../core/ui/app_toast.dart';
@@ -9,6 +14,7 @@ import '../application/active_session_notifier.dart';
 import 'vehicle_selector.dart';
 import '../../auth/presentation/vehicles_screen.dart';
 import '../../auth/presentation/profile_screen.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -28,6 +34,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
   bool _loadingBalance = true;
   final double _minSafeBalance = 15.0;
   bool _isPerformingAction = false;
+  bool _stopping = false;
   String _loadingMessage = 'Procesando...';
 
   @override
@@ -53,7 +60,8 @@ class _NfcPageState extends ConsumerState<NfcPage> {
   }
 
   Future<void> _scanQrAndStart() async {
-    final result = await Navigator.of(context).push<Map<String, dynamic>>(MaterialPageRoute(builder: (_) => const QrScanPage()));
+    final result = await Navigator.of(context)
+        .push<Map<String, dynamic>>(MaterialPageRoute(builder: (_) => const QrScanPage()));
 
     if (!mounted || result == null) return;
     final chargeBoxId = (result['charge_box_id'] ?? '').toString();
@@ -70,17 +78,18 @@ class _NfcPageState extends ConsumerState<NfcPage> {
       setState(() => _isPerformingAction = false);
 
       final stationId = (match['id'] as num).toInt();
-      final connectors = ((match['connectors'] as List?) ?? const []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final connectors = ((match['connectors'] as List?) ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
 
       final selectedConnectorId = await Navigator.of(context).push<int>(
         MaterialPageRoute(
-          builder:
-              (_) => QrConnectorSelectPage(
-                chargeBoxId: chargeBoxId,
-                stationName: match['name']?.toString() ?? 'Estación',
-                connectors: connectors,
-                initialConnectorId: initialConnectorId,
-              ),
+          builder: (_) => QrConnectorSelectPage(
+            chargeBoxId: chargeBoxId,
+            stationName: match['name']?.toString() ?? 'Estación',
+            connectors: connectors,
+            initialConnectorId: initialConnectorId,
+          ),
         ),
       );
 
@@ -134,14 +143,27 @@ class _NfcPageState extends ConsumerState<NfcPage> {
     }
   }
 
+  Future<void> _showCompletedSession(int id) async {
+    try {
+      final completed = await widget.api.session(id);
+      if (!mounted || completed['status'] != 'Completed') return;
+      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => SessionReceiptPage(session: completed)));
+    } catch (_) {
+      /* The confirmed history can be opened again later. */
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeSessionAsync = ref.watch(activeSessionProvider);
 
     // Refresh balance when session state changes (e.g. session finished)
     ref.listen(activeSessionProvider, (prev, next) {
-      if (prev?.value != next.value) {
+      if (prev?.asData?.value != null && next.hasValue && next.asData?.value == null) {
+        _stopping = false;
         _checkBalance();
+        final id = int.tryParse(prev?.asData?.value?['id']?.toString() ?? '');
+        if (id != null) _showCompletedSession(id);
       }
     });
 
@@ -157,6 +179,14 @@ class _NfcPageState extends ConsumerState<NfcPage> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            if (_userBalance == null)
+              return Center(
+                child: FilledButton.icon(
+                  onPressed: _checkBalance,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reintentar saldo'),
+                ),
+              );
             final hasBalance = (_userBalance ?? 0) >= _minSafeBalance;
             if (!hasBalance) {
               return _buildInsufficientBalanceView();
@@ -182,9 +212,11 @@ class _NfcPageState extends ConsumerState<NfcPage> {
           margin: const EdgeInsets.symmetric(horizontal: 40),
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(28),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -212,134 +244,11 @@ class _NfcPageState extends ConsumerState<NfcPage> {
       return _buildStartingView(session);
     }
 
-    final metrics = Map<String, dynamic>.from(session['current_metrics'] ?? {});
-    final power = metrics['power_kw'] ?? 0.0;
-    final energy = metrics['energy_kwh'] ?? 0.0;
-    final soc = metrics['soc'];
-    final cost = session['total_cost'] ?? 0.0;
-
-    final startTime = DateTime.tryParse(session['start_time'] ?? '') ?? DateTime.now();
-    final elapsed = DateTime.now().difference(startTime);
-
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        const Text('Carga Activa', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 24),
-        Card(
-          elevation: 12,
-          shadowColor: Colors.green.withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: BorderSide(color: Colors.green.shade200, width: 1.5),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Colors.white, Colors.green.shade50.withValues(alpha: 0.3)],
-              ),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), shape: BoxShape.circle),
-                      child: const Icon(Icons.bolt, color: Colors.green, size: 32),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text(
-                          'TIEMPO TRANSCURRIDO',
-                          style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w800, letterSpacing: 0.5),
-                        ),
-                        Text(
-                          '${elapsed.inMinutes}m ${elapsed.inSeconds % 60}s',
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _MetricItem(label: 'Potencia', value: '$power', unit: 'kW', icon: Icons.speed),
-                    _MetricItem(label: 'Energía', value: '$energy', unit: 'kWh', icon: Icons.electric_bolt),
-                    _MetricItem(
-                      label: 'Batería',
-                      value: soc != null ? '$soc' : '-',
-                      unit: '%',
-                      icon: Icons.battery_charging_full,
-                    ),
-                  ],
-                ),
-                const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Divider(thickness: 1)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'COSTO ACUMULADO',
-                          style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w800, letterSpacing: 0.5),
-                        ),
-                        Text('Bs $cost', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.green)),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () => _confirmStop(context, session),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade600,
-                          foregroundColor: Colors.white,
-                          elevation: 4,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.stop_circle_outlined, size: 20),
-                            SizedBox(width: 8),
-                            Text('DETENER', style: TextStyle(fontWeight: FontWeight.w900)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
-          child: const Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.blue, size: 20),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'La carga se detendrá automáticamente si el vehículo completa su capacidad.',
-                  style: TextStyle(color: Colors.blueGrey, fontSize: 12, height: 1.4),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return LiveChargeView(
+      session: session,
+      stale: ref.watch(activeSessionStaleProvider),
+      stopping: _stopping,
+      onStop: () => _confirmStop(context, session),
     );
   }
 
@@ -350,7 +259,7 @@ class _NfcPageState extends ConsumerState<NfcPage> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.blue.shade50, Colors.white],
+          colors: [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor],
         ),
       ),
       child: Center(
@@ -433,98 +342,102 @@ class _NfcPageState extends ConsumerState<NfcPage> {
     );
   }
 
-  void _confirmStop(BuildContext context, Map<String, dynamic> session) {
-    showDialog(
+  Future<void> _confirmStop(BuildContext context, Map<String, dynamic> session) async {
+    if (_stopping) return;
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Text('¿Detener carga?', style: TextStyle(fontWeight: FontWeight.bold)),
-            content: const Text('Se enviará la orden de parada al cargador. Esta acción no se puede deshacer.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text('VOLVER', style: TextStyle(color: Colors.grey.shade700)),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  widget.api.stopStation(session['station_id']).then((_) {
-                    ref.read(activeSessionProvider.notifier).refresh();
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('DETENER CARGA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Terminamos aquí?'),
+        content: const Text('Se enviará la solicitud de parada. Espera la confirmación antes de desconectar.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Seguir cargando')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Finalizar carga')),
+        ],
+      ),
     );
+    if (confirmed != true || !mounted) return;
+    setState(() => _stopping = true);
+    try {
+      await widget.api.stopStation((session['station_id'] as num).toInt());
+      await ref.read(activeSessionProvider.notifier).refresh();
+      if (!mounted) return;
+      showAppToast(context, 'Solicitud enviada. Esperando confirmación del cargador.', type: AppToastType.success);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _stopping = false);
+      showAppToast(
+        context,
+        'No pudimos confirmar el envío. Revisa tu conexión e intenta nuevamente.',
+        type: AppToastType.error,
+      );
+    }
   }
 
   void _showVehicleRequiredDialog(BuildContext context, String message) {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
-              children: [
-                Icon(LucideIcons.alertTriangle, color: Colors.orange),
-                SizedBox(width: 8),
-                Text('Vehículo Requerido', style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(LucideIcons.alertTriangle, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Vehículo Requerido', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const VehiclesScreen()));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            content: Text(message),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const VehiclesScreen()));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Registrar Vehículo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
+            child: const Text(
+              'Registrar Vehículo',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ),
+        ],
+      ),
     );
   }
 
   void _showBillingDocumentRequiredDialog(BuildContext context, String message) {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
-              children: [
-                Icon(LucideIcons.alertTriangle, color: Colors.orange),
-                SizedBox(width: 8),
-                Text('Documento Requerido', style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(LucideIcons.alertTriangle, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Documento Requerido', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            content: Text(message),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Completar Perfil', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
+            child: const Text(
+              'Completar Perfil',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ),
+        ],
+      ),
     );
   }
 
@@ -541,7 +454,10 @@ class _NfcPageState extends ConsumerState<NfcPage> {
               child: const Icon(Icons.account_balance_wallet_outlined, size: 80, color: Colors.orange),
             ),
             const SizedBox(height: 32),
-            const Text('Saldo Insuficiente', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+            const Text(
+              'Saldo Insuficiente',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+            ),
             const SizedBox(height: 16),
             Text(
               'Tu saldo actual (Bs ${_userBalance?.toStringAsFixed(2)}) es menor al mínimo requerido para iniciar (Bs $_minSafeBalance).',
@@ -569,93 +485,25 @@ class _NfcPageState extends ConsumerState<NfcPage> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text('Cargar', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            const Icon(Icons.wallet, size: 14, color: Colors.green),
-            const SizedBox(width: 6),
-            Text(
-              'Saldo disponible: Bs ${_userBalance?.toStringAsFixed(2)}',
-              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w800, fontSize: 14),
-            ),
-          ],
+        const MaxVoltHeading(
+          'Conecta.\nEscanea. Sigue.',
+          eyebrow: 'Carga en tres pasos',
+          subtitle: 'Usa el QR junto a la manguera de tu vehículo.',
         ),
-        const SizedBox(height: 60),
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(48),
-            decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.blue.withValues(alpha: 0.1), width: 2),
-            ),
-            child: const Icon(Icons.qr_code_scanner_rounded, size: 100, color: Colors.blue),
-          ),
-        ),
-        const SizedBox(height: 48),
-        const Text(
-          '¿Listo para cargar?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Escanea el código QR ubicado en el cargador para iniciar el suministro de energía a tu vehículo.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.blueGrey, height: 1.4),
-        ),
-        const SizedBox(height: 60),
-        SizedBox(
-          width: double.infinity,
-          height: 64,
-          child: FilledButton.icon(
-            onPressed: _scanQrAndStart,
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.blue.shade700,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              elevation: 4,
-            ),
-            icon: const Icon(Icons.qr_code_scanner, size: 28),
-            label: const Text('ESCANEAR QR', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1)),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MetricItem extends StatelessWidget {
-  const _MetricItem({required this.label, required this.value, required this.unit, required this.icon});
-  final String label;
-  final String value;
-  final String unit;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
+        const SizedBox(height: 26),
         Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: Colors.blueGrey.shade700, size: 22),
+          height: 220,
+          decoration: BoxDecoration(color: MaxVolt.night, borderRadius: BorderRadius.circular(26)),
+          child: const Center(child: Icon(Icons.qr_code_scanner, size: 110, color: MaxVolt.lime)),
         ),
-        const SizedBox(height: 10),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-            const SizedBox(width: 2),
-            Text(unit, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-          ],
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: _scanQrAndStart,
+          icon: const Icon(Icons.qr_code_scanner),
+          label: const Text('Escanear QR'),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.blueGrey.shade400, letterSpacing: 0.2),
-        ),
+        const SizedBox(height: 14),
+        Text('Saldo app: Bs ${_userBalance?.toStringAsFixed(2) ?? '—'}', textAlign: TextAlign.center),
       ],
     );
   }

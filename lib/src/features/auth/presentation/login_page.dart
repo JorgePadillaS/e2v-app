@@ -1,5 +1,7 @@
+import '../../../core/ui/maxvolt_theme.dart';
 import '../application/auth_controller.dart';
 import '../../../core/config/branding_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -239,73 +241,74 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ),
               actions: [
-                TextButton(onPressed: isDialogLoading ? null : () => Navigator.pop(context), child: const Text('Cancelar')),
+                TextButton(
+                  onPressed: isDialogLoading ? null : () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
                 ElevatedButton(
-                  onPressed:
-                      isDialogLoading
-                          ? null
-                          : () async {
-                            setDialogState(() {
-                              isDialogLoading = true;
-                              dialogError = null;
-                            });
+                  onPressed: isDialogLoading
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            isDialogLoading = true;
+                            dialogError = null;
+                          });
 
-                            try {
-                              if (step == 1) {
-                                if (emailController.text.trim().isEmpty) {
-                                  throw 'Ingresa un correo válido.';
-                                }
-                                await ref.read(authControllerProvider.notifier).sendResetPin(emailController.text.trim());
-                                setDialogState(() {
-                                  step = 2;
-                                });
-                              } else {
-                                if (codeController.text.trim().length != 6) {
-                                  throw 'El PIN debe tener 6 dígitos.';
-                                }
-                                if (newPasswordController.text.isEmpty) {
-                                  throw 'Ingresa una nueva contraseña.';
-                                }
-                                if (newPasswordController.text != confirmPasswordController.text) {
-                                  throw 'Las contraseñas no coinciden.';
-                                }
-                                await ref
-                                    .read(authControllerProvider.notifier)
-                                    .resetPassword(
-                                      email: emailController.text.trim(),
-                                      code: codeController.text.trim(),
-                                      password: newPasswordController.text,
-                                      passwordConfirmation: confirmPasswordController.text,
-                                    );
-
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Contraseña restablecida de forma exitosa.'),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                }
+                          try {
+                            if (step == 1) {
+                              if (emailController.text.trim().isEmpty) {
+                                throw 'Ingresa un correo válido.';
                               }
-                            } catch (e) {
+                              await ref.read(authControllerProvider.notifier).sendResetPin(emailController.text.trim());
                               setDialogState(() {
-                                dialogError = e.toString();
+                                step = 2;
                               });
-                            } finally {
-                              setDialogState(() {
-                                isDialogLoading = false;
-                              });
+                            } else {
+                              if (codeController.text.trim().length != 6) {
+                                throw 'El PIN debe tener 6 dígitos.';
+                              }
+                              if (newPasswordController.text.isEmpty) {
+                                throw 'Ingresa una nueva contraseña.';
+                              }
+                              if (newPasswordController.text != confirmPasswordController.text) {
+                                throw 'Las contraseñas no coinciden.';
+                              }
+                              await ref
+                                  .read(authControllerProvider.notifier)
+                                  .resetPassword(
+                                    email: emailController.text.trim(),
+                                    code: codeController.text.trim(),
+                                    password: newPasswordController.text,
+                                    passwordConfirmation: confirmPasswordController.text,
+                                  );
+
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Contraseña restablecida de forma exitosa.'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
                             }
-                          },
-                  child:
-                      isDialogLoading
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                          : Text(step == 1 ? 'Enviar PIN' : 'Restablecer'),
+                          } catch (e) {
+                            setDialogState(() {
+                              dialogError = e.toString();
+                            });
+                          } finally {
+                            setDialogState(() {
+                              isDialogLoading = false;
+                            });
+                          }
+                        },
+                  child: isDialogLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Text(step == 1 ? 'Enviar PIN' : 'Restablecer'),
                 ),
               ],
             );
@@ -355,7 +358,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       nitError = null;
     });
 
-    final isAvailable = await ref.read(authControllerProvider.notifier).validateField('billing_document', billingDocument.text);
+    final isAvailable = await ref
+        .read(authControllerProvider.notifier)
+        .validateField('billing_document', billingDocument.text);
 
     if (mounted) {
       setState(() {
@@ -382,7 +387,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              branding?.branding.primaryColor ?? const Color(0xFF0076D6),
+              branding?.branding.primaryColor ?? const Color(0xFF03624C),
               branding?.branding.secondaryColor ?? const Color(0xFF0E4A7B),
             ],
           ),
@@ -397,10 +402,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 tween: Tween(begin: 0.0, end: 1.0),
                 curve: Curves.easeOutCubic,
                 builder: (context, value, child) {
-                  return Opacity(opacity: value, child: Transform.translate(offset: Offset(0, 30 * (1 - value)), child: child));
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(offset: Offset(0, 30 * (1 - value)), child: child),
+                  );
                 },
                 child: Card(
-                  elevation: 16,
+                  elevation: 0,
                   shadowColor: Colors.black.withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   child: Padding(
@@ -412,19 +420,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         Center(
                           child: Hero(
                             tag: 'app_logo',
-                            child:
-                                branding?.logoUrl != null
-                                    ? Image.network(
-                                      branding!.logoUrl!,
-                                      height: 100,
-                                      errorBuilder: (_, __, ___) => Image.asset('assets/logo_mapa.png', height: 100),
-                                    )
-                                    : Image.asset('assets/logo_mapa.png', height: 100),
+                            child: Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(color: MaxVolt.forest, borderRadius: BorderRadius.circular(20)),
+                              child: const MaxVoltLogo(width: 200),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 32),
                         Text(
-                          registerMode ? 'Crear una cuenta' : 'Bienvenido a ${branding?.platformName ?? 'Electropoint'}',
+                          registerMode ? 'Crear una cuenta' : 'Bienvenido a ${branding?.platformName ?? 'MaxVolt'}',
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5),
                         ),
@@ -475,12 +480,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           keyboardType: TextInputType.emailAddress,
                           focusNode: emailFocus,
                           errorText: emailError,
-                          suffix:
-                              isValidatingEmail
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                  : (emailError == null && email.text.contains('@')
-                                      ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
-                                      : null),
+                          suffix: isValidatingEmail
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              : (emailError == null && email.text.contains('@')
+                                    ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                                    : null),
                           onChanged: _validateEmailFormat,
                         ),
                         const SizedBox(height: 16),
@@ -549,16 +553,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       setState(() => nitError = null);
                                     }
                                   },
-                                  suffix:
-                                      isValidatingNit
-                                          ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(strokeWidth: 2),
-                                          )
-                                          : (nitError == null && billingDocument.text.length >= 5
-                                              ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
-                                              : null),
+                                  suffix: isValidatingNit
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : (nitError == null && billingDocument.text.length >= 5
+                                            ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                                            : null),
                                 ),
                               ),
                             ],
@@ -577,88 +580,86 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         SizedBox(
                           height: 56,
                           child: FilledButton(
-                            onPressed:
-                                (loading || isValidatingEmail || isValidatingNit)
-                                    ? null
-                                    : () async {
-                                      setState(() => localError = null);
-                                      if (registerMode) {
-                                        _validateName(name.text);
-                                        _validatePhone(phone.text);
-                                        _validateEmailFormat(email.text);
-                                        _validatePassword(pass.text);
-                                        _validateConfirmPassword(confirmPass.text);
-                                        _validateBillingRazonSocial(billingRazonSocial.text);
+                            onPressed: (loading || isValidatingEmail || isValidatingNit)
+                                ? null
+                                : () async {
+                                    setState(() => localError = null);
+                                    if (registerMode) {
+                                      _validateName(name.text);
+                                      _validatePhone(phone.text);
+                                      _validateEmailFormat(email.text);
+                                      _validatePassword(pass.text);
+                                      _validateConfirmPassword(confirmPass.text);
+                                      _validateBillingRazonSocial(billingRazonSocial.text);
 
-                                        final docText = billingDocument.text.trim();
-                                        if (docText.isEmpty) {
-                                          setState(() => nitError = 'El número de documento (CI/NIT) es obligatorio');
-                                        } else {
-                                          final docRegExp = RegExp(r'^\d{5,15}$');
-                                          if (!docRegExp.hasMatch(docText)) {
-                                            setState(() => nitError = 'Debe tener entre 5 y 15 dígitos y solo números');
-                                          } else {
-                                            setState(() => nitError = null);
-                                          }
-                                        }
-
-                                        if (nameError != null ||
-                                            phoneError != null ||
-                                            emailError != null ||
-                                            passError != null ||
-                                            confirmPassError != null ||
-                                            nitError != null ||
-                                            billingRazonSocialError != null) {
-                                          setState(() => localError = 'Por favor, corrige los errores en el formulario');
-                                          return;
-                                        }
-
-                                        await ref
-                                            .read(authControllerProvider.notifier)
-                                            .register(
-                                              name: name.text.trim(),
-                                              email: email.text.trim(),
-                                              password: pass.text,
-                                              phone: phone.text.trim(),
-                                              billingDocument: billingDocument.text.trim(),
-                                              billingDocType: billingDocType.text,
-                                              billingRazonSocial: billingRazonSocial.text.trim(),
-                                            );
-                                        // Welcome dialog is now handled in HomePage using the is_new_user flag
+                                      final docText = billingDocument.text.trim();
+                                      if (docText.isEmpty) {
+                                        setState(() => nitError = 'El número de documento (CI/NIT) es obligatorio');
                                       } else {
-                                        _validateEmailFormat(email.text);
-                                        _validatePassword(pass.text);
-                                        if (emailError != null || passError != null) {
-                                          setState(() => localError = 'Por favor, ingresa credenciales válidas');
-                                          return;
+                                        final docRegExp = RegExp(r'^\d{5,15}$');
+                                        if (!docRegExp.hasMatch(docText)) {
+                                          setState(() => nitError = 'Debe tener entre 5 y 15 dígitos y solo números');
+                                        } else {
+                                          setState(() => nitError = null);
                                         }
-                                        await ref
-                                            .read(authControllerProvider.notifier)
-                                            .login(email: email.text.trim(), password: pass.text);
                                       }
-                                    },
+
+                                      if (nameError != null ||
+                                          phoneError != null ||
+                                          emailError != null ||
+                                          passError != null ||
+                                          confirmPassError != null ||
+                                          nitError != null ||
+                                          billingRazonSocialError != null) {
+                                        setState(() => localError = 'Por favor, corrige los errores en el formulario');
+                                        return;
+                                      }
+
+                                      await ref
+                                          .read(authControllerProvider.notifier)
+                                          .register(
+                                            name: name.text.trim(),
+                                            email: email.text.trim(),
+                                            password: pass.text,
+                                            phone: phone.text.trim(),
+                                            billingDocument: billingDocument.text.trim(),
+                                            billingDocType: billingDocType.text,
+                                            billingRazonSocial: billingRazonSocial.text.trim(),
+                                          );
+                                      // Welcome dialog is now handled in HomePage using the is_new_user flag
+                                    } else {
+                                      _validateEmailFormat(email.text);
+                                      _validatePassword(pass.text);
+                                      if (emailError != null || passError != null) {
+                                        setState(() => localError = 'Por favor, ingresa credenciales válidas');
+                                        return;
+                                      }
+                                      await ref
+                                          .read(authControllerProvider.notifier)
+                                          .login(email: email.text.trim(), password: pass.text);
+                                    }
+                                  },
                             style: FilledButton.styleFrom(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               elevation: 4,
                             ),
-                            child:
-                                loading
-                                    ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                    )
-                                    : Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(registerMode ? LucideIcons.userPlus : LucideIcons.logIn, size: 20),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          registerMode ? 'Registrarse' : 'Iniciar Sesión',
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
+                            child: loading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(registerMode ? LucideIcons.userPlus : LucideIcons.logIn, size: 20),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        registerMode ? 'Registrarse' : 'Iniciar Sesión',
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
                           ),
                         ),
                         if (!isIOS) ...[
@@ -666,7 +667,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           SizedBox(
                             height: 56,
                             child: OutlinedButton(
-                              onPressed: loading ? null : () => ref.read(authControllerProvider.notifier).loginWithGoogle(),
+                              onPressed: loading
+                                  ? null
+                                  : () => ref.read(authControllerProvider.notifier).loginWithGoogle(),
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 side: BorderSide(color: Colors.grey.shade300),
@@ -710,7 +713,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             billingRazonSocial.clear();
                           }),
                           child: Text(
-                            registerMode ? '¿Ya tienes una cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí',
+                            registerMode
+                                ? '¿Ya tienes una cuenta? Inicia sesión'
+                                : '¿No tienes cuenta? Regístrate aquí',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -725,7 +730,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             },
                             child: Text(
                               'Aviso Legal y Disclaimers',
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade500, decoration: TextDecoration.underline),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                                decoration: TextDecoration.underline,
+                              ),
                             ),
                           ),
                         ],
@@ -767,11 +776,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         prefixIcon: Icon(icon, size: 20),
         suffixIcon: isPassword
             ? IconButton(
-                icon: Icon(
-                  obscureText ? LucideIcons.eyeOff : LucideIcons.eye,
-                  size: 20,
-                  color: Colors.grey.shade600,
-                ),
+                icon: Icon(obscureText ? LucideIcons.eyeOff : LucideIcons.eye, size: 20, color: Colors.grey.shade600),
                 onPressed: onToggleObscure,
               )
             : (suffix != null ? Padding(padding: const EdgeInsets.all(12), child: suffix) : null),
@@ -785,7 +790,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF0076D6), width: 2),
+          borderSide: const BorderSide(color: Color(0xFF03624C), width: 2),
         ),
         filled: true,
         fillColor: Colors.grey.shade50,
@@ -803,7 +808,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       initialValue: value,
       isExpanded: true,
       iconSize: 18,
-      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis))).toList(),
+      items: items
+          .map(
+            (e) => DropdownMenuItem(
+              value: e,
+              child: Text(e, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(),
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
