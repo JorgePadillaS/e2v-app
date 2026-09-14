@@ -101,7 +101,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
                   children: [
                     TileLayer(
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'bo.e2v.chargestation',
+                      userAgentPackageName: 'net.maxvolt.app',
                     ),
                     MarkerLayer(
                       markers: [

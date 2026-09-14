@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = e2v_app
+PRODUCT_NAME = maxvolt_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.evbol.e2vApp
+PRODUCT_BUNDLE_IDENTIFIER = net.maxvolt.app
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.evbol. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 MaxVolt. All rights reserved.

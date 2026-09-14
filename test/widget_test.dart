@@ -1,5 +1,5 @@
-import 'package:e2v_app/src/core/ui/maxvolt_theme.dart';
-import 'package:e2v_app/src/features/mobile/presentation/live_charge_view.dart';
+import 'package:maxvolt_app/src/core/ui/maxvolt_theme.dart';
+import 'package:maxvolt_app/src/features/mobile/presentation/live_charge_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

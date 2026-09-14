@@ -1,6 +1,6 @@
 {
-    "name": "e2v_app",
-    "short_name": "e2v_app",
+    "name": "maxvolt_app",
+    "short_name": "maxvolt_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

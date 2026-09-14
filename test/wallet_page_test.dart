@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:e2v_app/src/core/ui/maxvolt_theme.dart';
-import 'package:e2v_app/src/features/mobile/presentation/wallet_page.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import 'package:maxvolt_app/src/core/ui/maxvolt_theme.dart';
+import 'package:maxvolt_app/src/features/mobile/presentation/wallet_page.dart';
+import 'package:maxvolt_app/src/features/mobile/data/mobile_api.dart';
 import 'package:dio/dio.dart';
 
 class WalletApi extends MobileApi {

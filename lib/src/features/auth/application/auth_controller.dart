@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../data/auth_api.dart';
 import '../data/token_store.dart';
 
-const _googleServerClientId = '318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com';
+const _googleServerClientId = String.fromEnvironment('MAXVOLT_GOOGLE_WEB_CLIENT_ID');
 
 final authApiProvider = Provider((ref) => AuthApi());
 final tokenStoreProvider = Provider((ref) => TokenStore());

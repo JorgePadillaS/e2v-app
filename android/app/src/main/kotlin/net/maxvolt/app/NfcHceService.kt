@@ -1,4 +1,4 @@
-package bo.e2v.chargestation
+package net.maxvolt.app
 
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
