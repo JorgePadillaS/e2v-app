@@ -68,7 +68,7 @@ class _WalletPageState extends ConsumerState<WalletPage>
       if (!mounted) return;
       _appLinks = AppLinks();
       _linkSubscription = _appLinks?.uriLinkStream.listen((uri) {
-        if ((uri.scheme == 'e2vapp' || uri.scheme == 'maxvolt') &&
+        if (uri.scheme == 'maxvolt' &&
             uri.host == 'payment-complete') {
           final txIdStr = uri.queryParameters['tx_id'];
           final txId = int.tryParse(txIdStr ?? '');
@@ -732,7 +732,7 @@ class _WalletPageState extends ConsumerState<WalletPage>
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                tag['name']?.toString() ?? 'Tarjeta E2V',
+                                tag['name']?.toString() ?? 'Tarjeta MaxVolt',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,

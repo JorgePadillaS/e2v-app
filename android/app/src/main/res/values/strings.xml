@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ElectroPoint</string>
-    <string name="nfc_hce_description">ElectroPoint ID Tap</string>
+    <string name="app_name">MaxVolt</string>
+    <string name="nfc_hce_description">MaxVolt ID Tap</string>
 </resources>

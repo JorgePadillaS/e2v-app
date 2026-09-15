@@ -15,7 +15,7 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "bo.e2v.chargestation"
+    namespace = "net.maxvolt.app"
     compileSdk = 36
     ndkVersion = "28.2.13676358"
 
@@ -35,7 +35,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "bo.e2v.chargestation"
+        applicationId = "net.maxvolt.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

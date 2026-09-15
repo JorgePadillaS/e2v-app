@@ -51,7 +51,7 @@ class _AppStartupWidgetState extends State<AppStartupWidget> {
         }
 
         if (snapshot.connectionState == ConnectionState.done) {
-          return const E2VApp();
+          return const MaxVoltApp();
         }
 
         return const MaterialApp(

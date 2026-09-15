@@ -2,17 +2,23 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
 import '../data/auth_api.dart';
 import '../data/token_store.dart';
 
-const _googleServerClientId = '318186059918-99vl6kkl7i9e6j21dv7422qa3mpe90nh.apps.googleusercontent.com';
+const _googleServerClientId = String.fromEnvironment(
+  'MAXVOLT_GOOGLE_WEB_CLIENT_ID',
+  defaultValue:
+      '92734497090-edrbs1kicgpalukafk3a1gn8531frcvn.apps.googleusercontent.com',
+);
 
 final authApiProvider = Provider((ref) => AuthApi());
 final tokenStoreProvider = Provider((ref) => TokenStore());
 
-final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<Map<String, dynamic>?>>(
-  (ref) => AuthController(ref),
-);
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AsyncValue<Map<String, dynamic>?>>(
+      (ref) => AuthController(ref),
+    );
 
 class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   AuthController(this.ref) : super(const AsyncValue.loading()) {
@@ -44,7 +50,8 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
         }
       }
 
-      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
         return 'Tiempo de espera agotado. Verifica tu conexión.';
       }
 
@@ -62,7 +69,10 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
       final token = await ref
           .read(tokenStoreProvider)
           .read()
-          .timeout(const Duration(seconds: 4), onTimeout: () => throw 'Token read timeout');
+          .timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => throw 'Token read timeout',
+          );
 
       if (token == null) {
         state = const AsyncValue.data(null);
@@ -84,7 +94,9 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   Future<void> login({required String email, required String password}) async {
     state = const AsyncValue.loading();
     try {
-      final res = await ref.read(authApiProvider).login(email: email, password: password);
+      final res = await ref
+          .read(authApiProvider)
+          .login(email: email, password: password);
       final token = res['token'] as String;
       await ref.read(tokenStoreProvider).save(token);
       final profile = await ref.read(authApiProvider).profile(token);
@@ -95,9 +107,19 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   }
 
   Future<void> loginWithGoogle() async {
+    if (_googleServerClientId.isEmpty) {
+      state = AsyncValue.error(
+        'El acceso con Google aún no está habilitado en MaxVolt. Ingresa con correo y contraseña.',
+        StackTrace.current,
+      );
+      return;
+    }
     state = const AsyncValue.loading();
     try {
-      final googleSignIn = GoogleSignIn(scopes: ['email', 'profile'], serverClientId: _googleServerClientId);
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        serverClientId: _googleServerClientId,
+      );
 
       final account = await googleSignIn.signIn();
       if (account == null) {
@@ -109,7 +131,10 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
       final idToken = auth.idToken;
 
       if (idToken == null) {
-        state = AsyncValue.error('No se pudo obtener el token de Google', StackTrace.current);
+        state = AsyncValue.error(
+          'No se pudo obtener el token de Google',
+          StackTrace.current,
+        );
         return;
       }
 
@@ -150,7 +175,11 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
       final token = res['token'] as String;
       await ref.read(tokenStoreProvider).save(token);
       final profile = await ref.read(authApiProvider).profile(token);
-      state = AsyncValue.data({'token': token, 'is_new_user': true, ...profile});
+      state = AsyncValue.data({
+        'token': token,
+        'is_new_user': true,
+        ...profile,
+      });
     } catch (e, st) {
       state = AsyncValue.error(_parseError(e), st);
     }
@@ -167,7 +196,10 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
 
   Future<void> logout() async {
     try {
-      final googleSignIn = GoogleSignIn(scopes: ['email', 'profile'], serverClientId: _googleServerClientId);
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        serverClientId: _googleServerClientId,
+      );
       if (await googleSignIn.isSignedIn()) {
         await googleSignIn.signOut();
       }
@@ -207,7 +239,10 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
     try {
       await ref.read(authApiProvider).deleteAccount(token);
       try {
-        final googleSignIn = GoogleSignIn(scopes: ['email', 'profile'], serverClientId: _googleServerClientId);
+        final googleSignIn = GoogleSignIn(
+          scopes: ['email', 'profile'],
+          serverClientId: _googleServerClientId,
+        );
         if (await googleSignIn.isSignedIn()) {
           await googleSignIn.signOut();
         }
@@ -240,7 +275,12 @@ class AuthController extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
     try {
       return await ref
           .read(authApiProvider)
-          .resetPassword(email: email, code: code, password: password, passwordConfirmation: passwordConfirmation);
+          .resetPassword(
+            email: email,
+            code: code,
+            password: password,
+            passwordConfirmation: passwordConfirmation,
+          );
     } catch (e) {
       throw _parseError(e);
     }

@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [app-sector-31]
   push:
-    branches: [codex/maxvolt-orbit]
+    branches: [codex/maxvolt-orbit, codex/maxvolt-identity]
 permissions:
   contents: read
 jobs:
@@ -29,6 +29,12 @@ jobs:
       - run: flutter test
       - name: Build debug APK
         run: flutter build apk --debug
+      - name: Inspect APK identity and test certificate
+        run: |
+          build_tools_dir=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          "$build_tools_dir/aapt" dump badging build/app/outputs/flutter-apk/app-debug.apk > "$RUNNER_TEMP/maxvolt-apk-info.txt"
+          sed -n '1p' "$RUNNER_TEMP/maxvolt-apk-info.txt"
+          "$build_tools_dir/apksigner" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: maxvolt-debug-apk

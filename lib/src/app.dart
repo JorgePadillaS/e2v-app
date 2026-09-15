@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/ui/maxvolt_theme.dart';
 import 'features/auth/presentation/auth_gate.dart';
 
-class E2VApp extends ConsumerWidget {
-  const E2VApp({super.key});
+class MaxVoltApp extends ConsumerWidget {
+  const MaxVoltApp({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) => MaterialApp(
     title: 'MaxVolt',

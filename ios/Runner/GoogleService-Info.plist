@@ -3,23 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>318186059918-tef03r3jbh5f4bk4vbboi6c97pi4vt34.apps.googleusercontent.com</string>
+	<string>92734497090-vp5rie0jtq9vpnm1rhnlfu6murm0ccqi.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.318186059918-tef03r3jbh5f4bk4vbboi6c97pi4vt34</string>
-	<key>ANDROID_CLIENT_ID</key>
-	<string>318186059918-6he6b1mvo4eof3nc4a66fs8g76nt32dj.apps.googleusercontent.com</string>
+	<string>com.googleusercontent.apps.92734497090-vp5rie0jtq9vpnm1rhnlfu6murm0ccqi</string>
 	<key>API_KEY</key>
-	<string>AIzaSyD2pZulC12myNzAFFU23hjekdWVUeUq8yc</string>
+	<string>AIzaSyCf4I0bLQOpSGvqGh-c1TdNaYxGvcd8cu4</string>
 	<key>GCM_SENDER_ID</key>
-	<string>318186059918</string>
+	<string>92734497090</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>bo.e2v.electropoint</string>
+	<string>net.maxvolt.app</string>
 	<key>PROJECT_ID</key>
-	<string>electropoint-8c3d1</string>
+	<string>maxvolt-ac105</string>
 	<key>STORAGE_BUCKET</key>
-	<string>electropoint-8c3d1.firebasestorage.app</string>
+	<string>maxvolt-ac105.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,8 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:318186059918:ios:a8e52afd3ddcdf11b931df</string>
-	<key>DATABASE_URL</key>
-	<string>https://electropoint-8c3d1-default-rtdb.firebaseio.com</string>
+	<string>1:92734497090:ios:1ad22a04d1e1af6608e8db</string>
 </dict>
 </plist>

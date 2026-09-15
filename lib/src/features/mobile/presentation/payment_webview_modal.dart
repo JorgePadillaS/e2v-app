@@ -247,8 +247,8 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     try {
       await _controller.runJavaScript('''
 (() => {
-  if (window.__e2vDownloadHookInstalled) return;
-  window.__e2vDownloadHookInstalled = true;
+  if (window.__maxvoltDownloadHookInstalled) return;
+  window.__maxvoltDownloadHookInstalled = true;
 
   document.addEventListener('click', function(ev) {
     const target = ev.target;
@@ -257,8 +257,8 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
     if (!el) return;
     const txt = (el.innerText || el.textContent || el.value || '').toLowerCase();
     if (txt.includes('descargar qr') || txt.includes('descargar')) {
-      if (window.E2VDownloadChannel && window.E2VDownloadChannel.postMessage) {
-        window.E2VDownloadChannel.postMessage('download_click');
+      if (window.MaxVoltDownloadChannel && window.MaxVoltDownloadChannel.postMessage) {
+        window.MaxVoltDownloadChannel.postMessage('download_click');
       }
     }
   }, true);
@@ -274,7 +274,7 @@ class _PaymentWebViewModalState extends State<PaymentWebViewModal> {
         WebViewController()
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
           ..addJavaScriptChannel(
-            'E2VDownloadChannel',
+            'MaxVoltDownloadChannel',
             onMessageReceived: (msg) async {
               if (msg.message == 'download_click') {
                 await Future.delayed(const Duration(milliseconds: 450));

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:e2v_app/src/core/ui/hold_to_stop.dart';
+import 'package:maxvolt_app/src/core/ui/hold_to_stop.dart';
 
 void main() {
   testWidgets('Short touch cancels, full hold opens exactly one confirmation', (tester) async {

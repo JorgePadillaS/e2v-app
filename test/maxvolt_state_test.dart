@@ -1,7 +1,7 @@
-import 'package:e2v_app/src/core/config/app_config.dart';
-import 'package:e2v_app/src/core/ui/connector_status.dart';
-import 'package:e2v_app/src/features/mobile/application/active_session_notifier.dart';
-import 'package:e2v_app/src/features/mobile/data/mobile_api.dart';
+import 'package:maxvolt_app/src/core/config/app_config.dart';
+import 'package:maxvolt_app/src/core/ui/connector_status.dart';
+import 'package:maxvolt_app/src/features/mobile/application/active_session_notifier.dart';
+import 'package:maxvolt_app/src/features/mobile/data/mobile_api.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class SessionApi extends MobileApi {

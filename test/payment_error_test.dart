@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:e2v_app/src/core/ui/payment_error.dart';
+import 'package:maxvolt_app/src/core/ui/payment_error.dart';
 
 void main() {
   DioException rejected(dynamic body) => DioException(

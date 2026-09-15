@@ -101,7 +101,7 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
                   children: [
                     TileLayer(
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'bo.e2v.chargestation',
+                      userAgentPackageName: 'net.maxvolt.app',
                     ),
                     MarkerLayer(
                       markers: [
@@ -119,32 +119,36 @@ class _ChargingMapScreenState extends ConsumerState<ChargingMapScreen> {
                                 final status = free > 0
                                     ? ConnectorStatus.from('AVAILABLE')
                                     : ConnectorStatus.from(connectors.firstOrNull?['status']);
-                                return Semantics(
-                                  button: true,
-                                  label: '${location['name']}: ${free > 0 ? '$free disponibles' : status.label}',
-                                  child: Material(
-                                    color: status.color,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      side: const BorderSide(color: Colors.white, width: 2),
-                                    ),
-                                    child: InkWell(
-                                      onTap: () {
-                                        setState(() => _selectedId = location['id']);
-                                        _map.move(_point(location)!, 14);
-                                      },
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(6),
-                                        child: Center(
-                                          child: Text(
-                                            free > 0 ? '⚡ $free libres' : status.label,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(color: Colors.white, fontSize: 11),
-                                          ),
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() => _selectedId = location['id']);
+                                    _map.move(_point(location)!, 14);
+                                  },
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: status.color,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: Colors.white, width: 2),
+                                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.ev_station, color: Colors.white, size: 16),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              free > 0 ? '$free Libres' : status.label,
+                                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ),
+                                      Icon(Icons.arrow_drop_down, color: status.color, size: 24),
+                                    ],
                                   ),
                                 );
                               },
