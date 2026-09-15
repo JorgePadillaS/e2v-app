@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [app-sector-31]
   push:
-    branches: [codex/maxvolt-orbit]
+    branches: [codex/maxvolt-orbit, codex/maxvolt-identity]
 permissions:
   contents: read
 jobs:

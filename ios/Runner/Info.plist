@@ -59,14 +59,6 @@
 			<key>CFBundleURLSchemes</key>
 			<array><string>maxvolt</string></array>
 		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>$(MAXVOLT_GOOGLE_REVERSED_CLIENT_ID)</string>
-			</array>
-		</dict>
 	</array>
 </dict>
 </plist>

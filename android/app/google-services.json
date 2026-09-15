@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "92734497090",
+    "project_id": "maxvolt-ac105",
+    "storage_bucket": "maxvolt-ac105.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:92734497090:android:b45c65d46168bc0108e8db",
+        "android_client_info": {
+          "package_name": "net.maxvolt.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCV7GovxqIh4nVw8X9a2nOaja-BAHSDTK8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

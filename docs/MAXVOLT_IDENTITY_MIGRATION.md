@@ -1,6 +1,7 @@
 # Identidad independiente de MaxVolt — preparación
 
-Rama pendiente de configuración Firebase; todavía no es instalable.
+Configuración Android/iOS recibida e integrada para `maxvolt-ac105`.
+`firebase_options.dart` deriva de ambos archivos para `net.maxvolt.app`.
 
 - Android applicationId/namespace e iOS bundle ID: `net.maxvolt.app`.
 - Paquete Dart: `maxvolt_app`.
@@ -25,7 +26,9 @@ Actualizar en el CMS el cliente Google aceptado, el proyecto FCM y el puente
 Firestore (`maxvolt_stations`), y los retornos de pagos al esquema MaxVolt.
 Configurar Remote Config con claves `maxvolt_*` en el nuevo proyecto.
 
-Los archivos previos no deben reutilizarse cambiando sus IDs a mano. La falta de
-configuración bloquea intencionalmente la compilación Android y el inicio.
-Pendientes análisis/pruebas Flutter, APK y pruebas de Google, FCM, Firestore,
-Remote Config y pagos una vez recibidos los archivos reales.
+Los archivos recibidos no incluyen clientes OAuth. El botón Google muestra un
+aviso hasta configurar el cliente Web y, en iOS, el esquema REVERSED_CLIENT_ID.
+Para habilitar Google hacen falta nuevas configuraciones con OAuth, las huellas
+Android y la actualización del cliente aceptado por el backend.
+Compilación y pruebas se registran en el PR. FCM, Firestore, Remote Config,
+retorno de pagos y compilación iOS requieren validación de integración.
