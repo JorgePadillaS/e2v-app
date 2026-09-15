@@ -56,6 +56,14 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.92734497090-vp5rie0jtq9vpnm1rhnlfu6murm0ccqi</string>
+			</array>
+		</dict>
+		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array><string>maxvolt</string></array>
 		</dict>

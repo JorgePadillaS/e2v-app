@@ -12,7 +12,12 @@
           "package_name": "net.maxvolt.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "92734497090-edrbs1kicgpalukafk3a1gn8531frcvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCV7GovxqIh4nVw8X9a2nOaja-BAHSDTK8"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "92734497090-edrbs1kicgpalukafk3a1gn8531frcvn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "92734497090-vp5rie0jtq9vpnm1rhnlfu6murm0ccqi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "net.maxvolt.app"
+              }
+            }
+          ]
         }
       }
     }

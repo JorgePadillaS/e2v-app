@@ -8,6 +8,8 @@ import '../data/token_store.dart';
 
 const _googleServerClientId = String.fromEnvironment(
   'MAXVOLT_GOOGLE_WEB_CLIENT_ID',
+  defaultValue:
+      '92734497090-edrbs1kicgpalukafk3a1gn8531frcvn.apps.googleusercontent.com',
 );
 
 final authApiProvider = Provider((ref) => AuthApi());

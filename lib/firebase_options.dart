@@ -28,5 +28,6 @@ class DefaultFirebaseOptions {
     projectId: 'maxvolt-ac105',
     storageBucket: 'maxvolt-ac105.firebasestorage.app',
     iosBundleId: 'net.maxvolt.app',
+    iosClientId: '92734497090-vp5rie0jtq9vpnm1rhnlfu6murm0ccqi.apps.googleusercontent.com',
   );
 }

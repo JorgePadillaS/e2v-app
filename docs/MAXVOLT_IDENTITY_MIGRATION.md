@@ -26,9 +26,12 @@ Actualizar en el CMS el cliente Google aceptado, el proyecto FCM y el puente
 Firestore (`maxvolt_stations`), y los retornos de pagos al esquema MaxVolt.
 Configurar Remote Config con claves `maxvolt_*` en el nuevo proyecto.
 
-Los archivos recibidos no incluyen clientes OAuth. El botón Google muestra un
-aviso hasta configurar el cliente Web y, en iOS, el esquema REVERSED_CLIENT_ID.
-Para habilitar Google hacen falta nuevas configuraciones con OAuth, las huellas
-Android y la actualización del cliente aceptado por el backend.
+Los archivos actualizados incluyen OAuth Web e iOS. Integrados cliente Web,
+iosClientId y esquema REVERSED_CLIENT_ID. El JSON no contiene cliente Android
+de tipo 1 con certificado. Registrar las huellas SHA-1/SHA-256 de la APK de
+prueba en Firebase y validar el acceso en teléfono. CI imprime el certificado
+de cada APK: los runners efímeros pueden generar firmas debug distintas entre
+compilaciones. La firma de publicación deberá mantenerse estable y registrarse
+por separado. No se ha probado un login real ni modificado el backend.
 Compilación y pruebas se registran en el PR. FCM, Firestore, Remote Config,
 retorno de pagos y compilación iOS requieren validación de integración.
